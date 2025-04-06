@@ -1,4 +1,3 @@
-
 export type User = {
   id: string;
   name: string;
@@ -43,3 +42,25 @@ export type AvailabilityInput = {
   bandId: string;
   dates: Date[];
 };
+
+export interface Instrument {
+  id: string;
+  name: string;
+  type: string;
+}
+
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+  practiceReminders: boolean;
+  newCollaborationRequests: boolean;
+  messageNotifications: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  fullName: string;
+  instruments: string[];
+  notificationPreferences: NotificationPreferences;
+  createdAt: string;
+}

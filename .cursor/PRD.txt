@@ -1,0 +1,83 @@
+Product Requirements Document (PRD)
+Product Name: RhythmSync
+1. Overview
+RhythmSync helps musical bands coordinate rehearsal and event schedules based on each
+member's availability. Users can upload ICS files or PDF copies of their work rosters, or manually
+input their available days. The system identifies overlapping availabilities, supports members in
+multiple bands, and provides intuitive scheduling tools for leaders.
+2. Goals
+- Simplify Scheduling: Automatically compare and visualize members' availability.
+- Enable Flexible Management: Support multiple bands with unique member roles.
+- Dual Input Methods: Allow availability submission via ICS file, PDF, or manual calendar interface.
+- Empower Band Leaders: Equip leaders to schedule rehearsals/gigs and notify members.
+- Modern UX: Deliver an intuitive, responsive UI for mobile and desktop users.
+3. Target Audience
+Primary Users:
+- Band members coordinating availability.
+- Band leaders managing rehearsals and gigs.
+Secondary Users:
+- Musicians in multiple bands with distinct schedules.
+4. Key Features
+4.1. User Accounts & Profiles
+- Sign up/login via email, Google, or Facebook.
+- User profiles include name, contact info, notification preferences, and instrument(s).
+4.2. Band & Role Management
+- Users can create or join bands.
+- Band leaders (admins) can manage members, availability, and events.
+- Admin roles are band-specific.
+4.3. Availability Input
+- ICS File Upload: Parse calendar files (.ics) for availability.
+- PDF Upload: OCR and parse text-based work rosters from PDF files.
+- Manual Input: Month-view calendar for selecting available dates.
+4.4. Availability Comparison & Scheduling
+- Visualize common availability across members.
+- Band leaders can assign rehearsals/gigs and send notifications.
+4.5. Notifications
+- Delivered via email, in-app, or push, based on user preference.
+4.6. Multi-Band Support
+- Users manage multiple bands from a dashboard.
+- Detect and alert for cross-band schedule conflicts.
+4.7. Admin Interface
+- Admins can edit member availability, assign events, and send reminders.
+5. Technical Requirements
+5.1. Platforms
+- Responsive Web App
+- Native Mobile Apps (iOS/Android)
+5.2. Backend
+- RESTful APIs, secure user database, ICS/PDF parsing engine.
+- Cloud storage for uploaded files.
+5.3. Security
+- OAuth login (Google/Facebook/email)
+- Data encryption (at rest and in transit)
+- Role-based access control
+6. User Stories
+1. As a member, I want to upload my ICS file to share my availability.
+2. As a member, I want to upload a PDF of my work schedule.
+3. As a member, I want to manually select available days on a calendar.
+4. As a leader, I want to view overlapping availability and assign events.
+5. As a leader, I want to update member availability if needed.
+6. As a multi-band musician, I want to switch between bands and avoid conflicts.
+7. As a user, I want to receive timely notifications about events and changes.
+7. Roadmap & Timeline
+Phase 1 - MVP (0-3 months): Core availability input (ICS/manual), calendar view, single-band
+scheduling.
+Phase 2 - Beta (4-6 months): PDF parsing, multi-band support, basic admin tools.
+Phase 3 - Final Release (7-9 months): Schedule conflict detection, full mobile launch, user settings,
+feedback system.
+8. Success Metrics
+- Monthly Active Users (MAU)
+- Retention and engagement rates
+- Scheduling Completion Rate (events created with full attendance)
+- Feature usage (ICS/PDF/manual input rates)
+- User Feedback & Ratings
+9. Dependencies & Risks
+Dependencies:
+- ICS parsing library
+- OCR/Text extraction for PDF
+- Notification service (e.g., Firebase, SendGrid)
+- Calendar UI framework
+Risks:
+- OCR accuracy for varying PDF formats
+- User resistance to adoption
+- Scheduling complexity (especially with multi-band users)
+- Privacy concerns with uploaded schedules
