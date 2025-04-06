@@ -5,17 +5,19 @@ import { format } from "date-fns";
 import { cn } from '@/lib/utils';
 
 type AvailabilityCalendarProps = {
-  selectedDates: Date[];
-  setSelectedDates: Dispatch<SetStateAction<Date[]>>;
+  selectedDates?: Date[];
+  setSelectedDates?: Dispatch<SetStateAction<Date[]>>;
   bandAvailability?: Record<string, { name: string; dates: Date[] }>;
   onlyView?: boolean;
+  bandId?: string;
 };
 
 const AvailabilityCalendar = ({
-  selectedDates,
-  setSelectedDates,
+  selectedDates = [],
+  setSelectedDates = () => {},
   bandAvailability,
   onlyView = false,
+  bandId,
 }: AvailabilityCalendarProps) => {
   const [date, setDate] = useState<Date>(new Date());
   const [memberColors, setMemberColors] = useState<Record<string, string>>({});
