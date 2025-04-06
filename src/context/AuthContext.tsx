@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -56,8 +55,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       navigate('/');
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing in');
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      toast.error(authError.message || 'Error signing in');
       throw error;
     } finally {
       setLoading(false);
@@ -82,8 +82,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       toast.success('Sign up successful! Please check your email for verification.');
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing up');
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      toast.error(authError.message || 'Error signing up');
       throw error;
     } finally {
       setLoading(false);
@@ -102,8 +103,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       toast.success('Password reset instructions sent to your email');
-    } catch (error: any) {
-      toast.error(error.message || 'Error resetting password');
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      toast.error(authError.message || 'Error resetting password');
       throw error;
     } finally {
       setLoading(false);
@@ -121,8 +123,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       toast.success('Password updated successfully');
       navigate('/');
-    } catch (error: any) {
-      toast.error(error.message || 'Error updating password');
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      toast.error(authError.message || 'Error updating password');
       throw error;
     } finally {
       setLoading(false);
@@ -134,8 +137,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       await supabase.auth.signOut();
       navigate('/auth');
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing out');
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      toast.error(authError.message || 'Error signing out');
     } finally {
       setLoading(false);
     }
