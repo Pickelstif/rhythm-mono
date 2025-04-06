@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
-      navigate('/auth');
+      navigate('/');
     } catch (error: unknown) {
       const authError = error as AuthError;
       toast.error(authError.message || 'Error signing out');
