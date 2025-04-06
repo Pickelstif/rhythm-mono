@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({ 
+      const { error: authError } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -77,8 +77,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       });
       
-      if (error) {
-        throw error;
+      if (authError) {
+        throw authError;
       }
       
       toast.success('Sign up successful! Please check your email for verification.');
