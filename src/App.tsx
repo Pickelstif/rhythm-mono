@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
+import JoinBand from "./pages/JoinBand";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,11 @@ const App = () => (
             <Route path="/band/:bandId" element={
               <ProtectedRoute>
                 <BandDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/join-band/:bandId" element={
+              <ProtectedRoute>
+                <JoinBand />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
