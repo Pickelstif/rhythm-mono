@@ -1,55 +1,184 @@
-
-import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { cn } from '@/lib/utils';
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Copy } from "lucide-react";
 
 type AvailabilityCalendarProps = {
-  selectedDates?: Date[];
-  setSelectedDates?: Dispatch<SetStateAction<Date[]>>;
-  bandAvailability?: Record<string, { name: string; dates: Date[] }>;
-  onlyView?: boolean;
-  bandId?: string;
+  bandId: string;
 };
 
-const AvailabilityCalendar = ({
-  selectedDates = [],
-  setSelectedDates = () => {},
-  bandAvailability,
-  onlyView = false,
-  bandId,
-}: AvailabilityCalendarProps) => {
-  const [date, setDate] = useState<Date>(new Date());
-  const [memberColors, setMemberColors] = useState<Record<string, string>>({});
-  
-  useEffect(() => {
-    // Assign colors to each band member for the availability visualization
-    if (bandAvailability) {
-      const colors = [
-        'bg-red-200',
-        'bg-blue-200',
-        'bg-green-200',
-        'bg-yellow-200',
-        'bg-purple-200',
-        'bg-pink-200',
-        'bg-indigo-200',
-        'bg-orange-200',
-      ];
-      
-      const members = Object.keys(bandAvailability);
-      const memberColorMap: Record<string, string> = {};
-      
-      members.forEach((member, index) => {
-        memberColorMap[member] = colors[index % colors.length];
-      });
-      
-      setMemberColors(memberColorMap);
-    }
-  }, [bandAvailability]);
+const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
+  const { user } = useAuth();
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [bandAvailability, setBandAvailability] = useState<Record<string, { name: string; dates: Date[] }>>({});
+  const [isLeader, setIsLeader] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
 
-  const handleSelect = (days: Date[] | undefined) => {
-    if (days && !onlyView) {
-      setSelectedDates(days);
+  // Fetch existing availability for the band
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (!user || !bandId) return;
+
+      try {
+        // Check if user is a leader
+        const { data: memberData, error: memberError } = await supabase
+          .from("band_members")
+          .select("role")
+          .eq("band_id", bandId)
+          .eq("user_id", user.id)
+          .single();
+
+        if (memberError) throw memberError;
+        setIsLeader(memberData.role === "leader");
+
+        // Generate invite link
+        const baseUrl = window.location.origin;
+        setInviteLink(`${baseUrl}/join-band/${bandId}`);
+
+        // Get all members of the band
+        const { data: members, error: membersError } = await supabase
+          .from("band_members")
+          .select("user_id")
+          .eq("band_id", bandId);
+
+        if (membersError) throw membersError;
+
+        // Get availability for each member
+        const availabilityPromises = members.map(async (member) => {
+          const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("name, email")
+            .eq("id", member.user_id)
+            .single();
+
+          if (userError) throw userError;
+
+          const { data: availabilityData, error: availabilityError } = await supabase
+            .from("availability")
+            .select("date")
+            .eq("band_id", bandId)
+            .eq("user_id", member.user_id);
+
+          if (availabilityError) throw availabilityError;
+
+          return {
+            userId: member.user_id,
+            name: userData.name || userData.email || "Unknown",
+            dates: availabilityData?.map(avail => new Date(avail.date)) || [],
+          };
+        });
+
+        const memberAvailability = await Promise.all(availabilityPromises);
+        
+        // Convert to the format expected by the calendar
+        const availabilityMap: Record<string, { name: string; dates: Date[] }> = {};
+        memberAvailability.forEach(member => {
+          availabilityMap[member.userId] = {
+            name: member.name,
+            dates: member.dates,
+          };
+        });
+
+        setBandAvailability(availabilityMap);
+
+        // Set the current user's selected dates
+        const currentUserAvailability = memberAvailability.find(m => m.userId === user.id);
+        if (currentUserAvailability) {
+          setSelectedDates(currentUserAvailability.dates);
+        }
+      } catch (error) {
+        console.error("Error fetching availability:", error);
+        toast.error("Failed to load availability data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [bandId, user]);
+
+  const handleCopyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast.success("Invite link copied to clipboard");
+    } catch (error) {
+      toast.error("Failed to copy invite link");
+    }
+  };
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDates(prev => {
+      const isSelected = prev.some(d => isSameDay(d, date));
+      if (isSelected) {
+        // Remove the date if it's already selected
+        return prev.filter(d => !isSameDay(d, date));
+      } else {
+        // Add the date if it's not selected
+        return [...prev, date];
+      }
+    });
+  };
+
+  const handleSave = async () => {
+    if (!user || !bandId) return;
+
+    try {
+      setSaving(true);
+
+      // Delete existing availability for this user and band
+      const { error: deleteError } = await supabase
+        .from("availability")
+        .delete()
+        .eq("band_id", bandId)
+        .eq("user_id", user.id);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new availability
+      const availabilityData = selectedDates.map(date => ({
+        band_id: bandId,
+        user_id: user.id,
+        date: format(date, "yyyy-MM-dd"),
+        source: "manual",
+      }));
+
+      const { error: insertError } = await supabase
+        .from("availability")
+        .insert(availabilityData);
+
+      if (insertError) throw insertError;
+
+      // Get the user's name
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) throw userError;
+
+      // Update local state
+      setBandAvailability(prev => ({
+        ...prev,
+        [user.id]: {
+          name: userData.name || user.email || "You",
+          dates: selectedDates,
+        },
+      }));
+
+      toast.success("Availability updated successfully");
+    } catch (error) {
+      console.error("Error saving availability:", error);
+      toast.error("Failed to save availability");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -65,37 +194,51 @@ const AvailabilityCalendar = ({
     if (availableMembers.length === 0) return '';
     
     if (availableMembers.length === Object.keys(bandAvailability).length) {
-      return 'bg-green-500 text-white hover:bg-green-600'; // All members available
+      return 'ring-2 ring-amber-400 text-amber-400 hover:ring-amber-500 hover:text-amber-500'; // All members available
     }
     
-    return 'bg-yellow-200 hover:bg-yellow-300'; // Some members available
+    return ''; // Some members available - no background color
   };
   
   const renderDay = (day: Date) => {
     const dayClass = getDayClass(day);
-    const isSelected = selectedDates.some(d => 
-      format(d, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
-    );
+    const isSelected = selectedDates.some(d => isSameDay(d, day));
+    
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const availableMembers = Object.entries(bandAvailability)
+      .filter(([_, memberData]) => 
+        memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
+      );
+    
+    const allMembersAvailable = availableMembers.length === Object.keys(bandAvailability).length;
     
     return (
       <div 
         className={cn(
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+          "h-8 w-8 p-0 font-normal aria-selected:opacity-100 cursor-pointer rounded-full transition-colors duration-200",
           dayClass,
-          isSelected && !onlyView ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""
+          isSelected ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" : "hover:bg-muted/50",
+          "flex flex-col items-center justify-center relative"
         )}
+        onClick={() => handleDateClick(day)}
       >
-        {day.getDate()}
-        {bandAvailability && (
-          <div className="flex flex-wrap mt-1 justify-center">
+        <span className={cn(
+          "text-sm font-medium",
+          allMembersAvailable && !isSelected && "text-amber-400"
+        )}>{day.getDate()}</span>
+        {bandAvailability && !allMembersAvailable && availableMembers.length > 0 && (
+          <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-0.5 translate-y-1">
             {Object.entries(bandAvailability)
               .filter(([_, memberData]) => 
-                memberData.dates.some(d => format(d, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'))
+                memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
               )
               .map(([memberId, memberData], index) => (
                 <div 
                   key={index}
-                  className={cn("h-1 w-1 rounded-full mx-0.5", memberColors[memberId])}
+                  className={cn(
+                    "h-1 w-1 rounded-full",
+                    memberId === user?.id ? "bg-primary" : "bg-muted-foreground/50"
+                  )}
                   title={memberData.name}
                 />
               ))
@@ -106,42 +249,81 @@ const AvailabilityCalendar = ({
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative p-4 bg-white rounded-lg shadow-md">
-      <Calendar
-        mode="multiple"
-        selected={selectedDates}
-        onSelect={handleSelect}
-        className="rounded-md border"
-        month={date}
-        onMonthChange={setDate}
-        components={{
-          Day: ({ date, ...props }) => {
-            return (
-              <div {...props}>
-                {renderDay(date)}
-              </div>
-            );
-          },
-        }}
-      />
+    <div className="space-y-6 p-4 bg-card rounded-lg border shadow-sm">
+      {isLeader && (
+        <div className="space-y-2">
+          <h3 className="font-medium text-sm text-muted-foreground">Invite Members</h3>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono truncate">
+              {inviteLink}
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCopyInviteLink}
+              className="shrink-0"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+      <div className="text-sm text-muted-foreground text-center">
+        Click on dates to select/deselect your availability
+      </div>
+      <div className="flex justify-center">
+        <Calendar
+          mode="multiple"
+          selected={selectedDates}
+          onSelect={setSelectedDates}
+          className="rounded-lg border-none"
+          components={{
+            Day: ({ date, ...props }) => {
+              return (
+                <div {...props}>
+                  {renderDay(date)}
+                </div>
+              );
+            },
+          }}
+        />
+      </div>
       
-      {bandAvailability && (
-        <div className="mt-4 space-y-2">
-          <h3 className="font-medium text-sm">Member Availability</h3>
-          <div className="flex flex-wrap gap-3">
+      <div className="flex flex-col gap-4">
+        <div className="space-y-3">
+          <h3 className="font-medium text-sm text-muted-foreground">Member Availability</h3>
+          <div className="flex flex-wrap gap-4">
             {Object.entries(bandAvailability).map(([memberId, memberData]) => (
               <div 
                 key={memberId}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-2"
               >
-                <div className={cn("h-3 w-3 rounded-full", memberColors[memberId])} />
-                <span className="text-sm">{memberData.name}</span>
+                <div className={cn(
+                  "h-3 w-3 rounded-full",
+                  memberId === user?.id ? "bg-primary" : "bg-muted-foreground/50"
+                )} />
+                <span className="text-sm font-medium">{memberData.name}</span>
               </div>
             ))}
           </div>
         </div>
-      )}
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="w-full"
+        >
+          {saving ? "Saving..." : "Save Availability"}
+        </Button>
+      </div>
     </div>
   );
 };
