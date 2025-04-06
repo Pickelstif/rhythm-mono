@@ -1,8 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Band, Event, BandMember } from "@/types";
-import { getBandById } from "@/services/mock-data";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,22 +9,85 @@ import { CalendarDays, MapPin, Plus, Clock, Users } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
-import { currentUser } from "@/services/mock-data";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
+  const { user } = useAuth();
   const [band, setBand] = useState<Band | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBand = async () => {
-      if (!bandId) return;
+      if (!bandId || !user) return;
       
       try {
-        const bandData = await getBandById(bandId);
-        if (bandData) {
-          setBand(bandData);
-        }
+        // Get band details
+        const { data: bandData, error: bandError } = await supabase
+          .from("bands")
+          .select("*")
+          .eq("id", bandId)
+          .single();
+
+        if (bandError) throw bandError;
+        if (!bandData) return;
+
+        // Get band members
+        const { data: members, error: membersError } = await supabase
+          .from("band_members")
+          .select("user_id, role")
+          .eq("band_id", bandId);
+
+        if (membersError) throw membersError;
+
+        // Get user details for each member
+        const memberDetails = await Promise.all(
+          members.map(async (member) => {
+            const { data: userData, error: userError } = await supabase
+              .from("users")
+              .select("name, instruments")
+              .eq("id", member.user_id)
+              .single();
+
+            if (userError) throw userError;
+
+            return {
+              userId: member.user_id,
+              name: userData.name,
+              role: member.role as "leader" | "member",
+              instruments: userData.instruments || [],
+            };
+          })
+        );
+
+        // Get band events
+        const { data: events, error: eventsError } = await supabase
+          .from("events")
+          .select("*")
+          .eq("band_id", bandId);
+
+        if (eventsError) throw eventsError;
+
+        const formattedEvents = events?.map(event => ({
+          id: event.id,
+          bandId: event.band_id,
+          title: event.title,
+          description: event.description,
+          startTime: new Date(event.date),
+          endTime: new Date(event.date), // Using the same date for now since we don't have end_time
+          attendees: [], // We'll implement attendees later
+          createdBy: event.created_by,
+          createdAt: new Date(event.created_at),
+        })) || [];
+
+        setBand({
+          id: bandData.id,
+          name: bandData.name,
+          members: memberDetails,
+          events: formattedEvents,
+          createdAt: new Date(bandData.created_at),
+        });
       } catch (error) {
         console.error("Error fetching band:", error);
       } finally {
@@ -35,10 +96,10 @@ const BandDetail = () => {
     };
 
     fetchBand();
-  }, [bandId]);
+  }, [bandId, user]);
 
   const isLeader = band?.members.some(
-    member => member.userId === currentUser.id && member.role === "leader"
+    member => member.userId === user?.id && member.role === "leader"
   );
 
   const sortEventsByDate = (events: Event[]) => {
@@ -67,7 +128,7 @@ const BandDetail = () => {
           <h1 className="text-2xl font-bold mb-4">Band not found</h1>
           <p className="mb-6">The band you are looking for does not exist or you don't have access to it.</p>
           <Button asChild>
-            <Link to="/">Back to Dashboard</Link>
+            <Link to="/dashboard">Back to Dashboard</Link>
           </Button>
         </main>
       </div>
@@ -117,12 +178,6 @@ const BandDetail = () => {
                         <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                         {format(event.startTime, "h:mm a")} - {format(event.endTime, "h:mm a")}
                       </div>
-                      {event.location && (
-                        <div className="flex items-center text-sm">
-                          <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                          {event.location}
-                        </div>
-                      )}
                       <div className="flex items-center text-sm">
                         <Users className="mr-2 h-4 w-4 text-muted-foreground" />
                         {event.attendees.length} attendees

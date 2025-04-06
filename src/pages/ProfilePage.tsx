@@ -17,7 +17,7 @@ const availableInstruments: Instrument[] = [
   { id: 'guitar', name: 'Guitar', type: 'String' },
   { id: 'drums', name: 'Drums', type: 'Percussion' },
   { id: 'bass', name: 'Bass', type: 'String' },
-  { id: 'violin', name: 'Violin', type: 'String' },
+  { id: 'vocals', name: 'Vocals', type: 'Voice' },
   { id: 'saxophone', name: 'Saxophone', type: 'Wind' },
 ];
 

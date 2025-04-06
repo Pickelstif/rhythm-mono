@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Music, Calendar, Users, Upload, Zap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -27,6 +26,10 @@ const FeatureCard = ({
 
 const Landing = () => {
   const { user } = useAuth();
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
