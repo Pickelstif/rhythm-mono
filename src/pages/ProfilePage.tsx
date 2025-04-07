@@ -14,12 +14,11 @@ import Header from '../components/Header';
 import Footer from '@/components/Footer';
 
 const availableInstruments: Instrument[] = [
-  { id: 'piano', name: 'Piano', type: 'Keys' },
-  { id: 'guitar', name: 'Guitar', type: 'String' },
-  { id: 'drums', name: 'Drums', type: 'Percussion' },
-  { id: 'bass', name: 'Bass', type: 'String' },
-  { id: 'vocals', name: 'Vocals', type: 'Voice' },
-  { id: 'saxophone', name: 'Saxophone', type: 'Wind' },
+  { id: 'guitar', name: 'Guitar', type: '' },
+  { id: 'bass', name: 'Bass', type: '' },
+  { id: 'vocals', name: 'Vocal', type: '' },
+  { id: 'drums', name: 'Drums', type: '' },
+  { id: 'keys', name: 'Keys', type: '' },
 ];
 
 const defaultProfile: UserProfile = {
@@ -88,12 +87,12 @@ const ProfilePage = () => {
   };
 
   const toggleInstrument = (instrument: Instrument) => {
-    const isSelected = profile.instruments.includes(instrument.id);
+    const isSelected = profile.instruments.includes(instrument.name);
     setProfile({
       ...profile,
       instruments: isSelected
-        ? profile.instruments.filter(id => id !== instrument.id)
-        : [...profile.instruments, instrument.id],
+        ? profile.instruments.filter(name => name !== instrument.name)
+        : [...profile.instruments, instrument.name],
     });
   };
 
@@ -220,7 +219,7 @@ const ProfilePage = () => {
                           </p>
                         </div>
                         <Switch
-                          checked={profile.instruments.includes(instrument.id)}
+                          checked={profile.instruments.includes(instrument.name)}
                           onCheckedChange={() => toggleInstrument(instrument)}
                           disabled={!isEditing}
                         />
