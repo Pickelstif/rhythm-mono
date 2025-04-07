@@ -309,46 +309,77 @@ const BandDetail = () => {
                             />
                           ))}
                         </div>
-                        <h3 className="text-lg font-semibold mt-6">Scheduled Events</h3>
                       </div>
                     )}
-                    {sortEventsByDate(band.events).map((event) => (
-                      <Card key={event.id}>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <CardTitle className="text-xl">{event.title}</CardTitle>
-                            {isLeader && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleDeleteEvent(event.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            <div className="flex items-center text-sm">
-                              <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-                              {format(event.startTime, "EEEE, MMMM d, yyyy")}
-                            </div>
-                            <div className="flex items-center text-sm">
-                              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                              {format(event.startTime, "h:mm a")}
-                            </div>
-                            {event.location && (
-                              <div className="flex items-center text-sm">
-                                <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                                {event.location}
+                    {!isLeader && availableDates.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Available Dates</h3>
+                        <p className="text-muted-foreground">
+                          The following dates would be great for scheduling rehearsals or gigs, as all band members are available:
+                        </p>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {availableDates.map((date) => (
+                            <Card key={date.toISOString()}>
+                              <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium">
+                                      {format(date, "MMMM d, yyyy")}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      All members available
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Consider suggesting these dates to your band leader for scheduling events.
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Scheduled Events</h3>
+                      <div className="grid gap-6">
+                        {sortEventsByDate(band.events).map((event) => (
+                          <Card key={event.id}>
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle>{event.title}</CardTitle>
+                                  <CardDescription className="flex items-center gap-2 mt-1">
+                                    <span className="capitalize">{event.eventType}</span>
+                                    <span>•</span>
+                                    <span>{format(event.startTime, "MMMM d, yyyy")}</span>
+                                    <span>•</span>
+                                    <span>{format(event.startTime, "h:mm a")}</span>
+                                  </CardDescription>
+                                </div>
+                                {isLeader && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteEvent(event.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            </CardHeader>
+                            <CardContent>
+                              {event.location && (
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <MapPin className="h-4 w-4" />
+                                  <span>{event.location}</span>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </TabsContent>
