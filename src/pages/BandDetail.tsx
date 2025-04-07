@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, MapPin, Plus, Clock, Users, Copy } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
@@ -13,85 +13,88 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Footer from '@/components/Footer';
 import { toast } from "sonner";
+import { CreateEventModal } from "@/components/CreateEventModal";
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
   const { user } = useAuth();
   const [band, setBand] = useState<Band | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
+
+  const fetchBand = async () => {
+    if (!bandId || !user) return;
+    
+    try {
+      const { data: bandData, error: bandError } = await supabase
+        .from("bands")
+        .select("*")
+        .eq("id", bandId)
+        .single();
+
+      if (bandError) throw bandError;
+      if (!bandData) return;
+
+      const { data: members, error: membersError } = await supabase
+        .from("band_members")
+        .select("user_id, role")
+        .eq("band_id", bandId);
+
+      if (membersError) throw membersError;
+
+      const memberDetails = await Promise.all(
+        members.map(async (member) => {
+          const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("name, instruments")
+            .eq("id", member.user_id)
+            .single();
+
+          if (userError) throw userError;
+
+          return {
+            userId: member.user_id,
+            name: userData.name,
+            role: member.role as "leader" | "member",
+            instruments: userData.instruments || [],
+          };
+        })
+      );
+
+      const { data: events, error: eventsError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("band_id", bandId);
+
+      if (eventsError) throw eventsError;
+
+      const formattedEvents = events?.map(event => ({
+        id: event.id,
+        bandId: event.band_id,
+        title: event.title,
+        location: event.location,
+        startTime: new Date(event.start_time),
+        eventType: event.event_type as "rehearsal" | "gig",
+        attendees: [],
+        createdBy: event.created_by,
+        createdAt: new Date(event.created_at),
+      })) || [];
+
+      setBand({
+        id: bandData.id,
+        name: bandData.name,
+        members: memberDetails,
+        events: formattedEvents,
+        createdAt: new Date(bandData.created_at),
+      });
+    } catch (error) {
+      console.error("Error fetching band:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBand = async () => {
-      if (!bandId || !user) return;
-      
-      try {
-        const { data: bandData, error: bandError } = await supabase
-          .from("bands")
-          .select("*")
-          .eq("id", bandId)
-          .single();
-
-        if (bandError) throw bandError;
-        if (!bandData) return;
-
-        const { data: members, error: membersError } = await supabase
-          .from("band_members")
-          .select("user_id, role")
-          .eq("band_id", bandId);
-
-        if (membersError) throw membersError;
-
-        const memberDetails = await Promise.all(
-          members.map(async (member) => {
-            const { data: userData, error: userError } = await supabase
-              .from("users")
-              .select("name, instruments")
-              .eq("id", member.user_id)
-              .single();
-
-            if (userError) throw userError;
-
-            return {
-              userId: member.user_id,
-              name: userData.name,
-              role: member.role as "leader" | "member",
-              instruments: userData.instruments || [],
-            };
-          })
-        );
-
-        const { data: events, error: eventsError } = await supabase
-          .from("events")
-          .select("*")
-          .eq("band_id", bandId);
-
-        if (eventsError) throw eventsError;
-
-        const formattedEvents = events?.map(event => ({
-          id: event.id,
-          bandId: event.band_id,
-          title: event.title,
-          location: event.location,
-          startTime: new Date(event.start_time),
-          attendees: [],
-          createdBy: event.created_by,
-          createdAt: new Date(event.created_at),
-        })) || [];
-
-        setBand({
-          id: bandData.id,
-          name: bandData.name,
-          members: memberDetails,
-          events: formattedEvents,
-          createdAt: new Date(bandData.created_at),
-        });
-      } catch (error) {
-        console.error("Error fetching band:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBand();
   }, [bandId, user]);
 
@@ -101,6 +104,23 @@ const BandDetail = () => {
 
   const sortEventsByDate = (events: Event[]) => {
     return [...events].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      toast.success("Event deleted successfully");
+      fetchBand(); // Refresh the events list
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Failed to delete event");
+    }
   };
 
   if (loading) {
@@ -165,7 +185,7 @@ const BandDetail = () => {
             )}
           </div>
           {isLeader && (
-            <Button>
+            <Button onClick={() => setIsCreateEventModalOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Schedule Event
             </Button>
           )}
@@ -183,7 +203,19 @@ const BandDetail = () => {
               {sortEventsByDate(band.events).map((event) => (
                 <Card key={event.id}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl">{event.title}</CardTitle>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-xl">{event.title}</CardTitle>
+                      {isLeader && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleDeleteEvent(event.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -201,10 +233,6 @@ const BandDetail = () => {
                           {event.location}
                         </div>
                       )}
-                      <div className="flex items-center text-sm">
-                        <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {event.attendees.length} attendees
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -217,7 +245,7 @@ const BandDetail = () => {
                     There are no upcoming events for this band.
                   </p>
                   {isLeader && (
-                    <Button>
+                    <Button onClick={() => setIsCreateEventModalOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" /> Schedule First Event
                     </Button>
                   )}
@@ -280,6 +308,16 @@ const BandDetail = () => {
         </Tabs>
       </main>
       <Footer />
+
+      <CreateEventModal
+        bandId={bandId!}
+        isOpen={isCreateEventModalOpen}
+        onClose={() => setIsCreateEventModalOpen(false)}
+        onEventCreated={() => {
+          // Refresh the band data to show the new event
+          fetchBand();
+        }}
+      />
     </div>
   );
 };
