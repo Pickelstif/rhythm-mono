@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Band } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,6 @@ const Dashboard = () => {
     if (!user) return;
 
     try {
-      // Get bands where the user is a member
       const { data: bandMembers, error: membersError } = await supabase
         .from("band_members")
         .select("band_id")
@@ -34,7 +32,6 @@ const Dashboard = () => {
 
       const bandIds = bandMembers.map((member) => member.band_id);
 
-      // Get the band details
       const { data: bandsData, error: bandsError } = await supabase
         .from("bands")
         .select("*")
@@ -42,7 +39,6 @@ const Dashboard = () => {
 
       if (bandsError) throw bandsError;
 
-      // Get member details for each band
       const bandsWithMembers = await Promise.all(
         bandsData.map(async (band) => {
           const { data: members, error: membersError } = await supabase
@@ -52,7 +48,6 @@ const Dashboard = () => {
 
           if (membersError) throw membersError;
 
-          // Get user details for each member
           const memberDetails = await Promise.all(
             members.map(async (member) => {
               const { data: userData, error: userError } = await supabase
@@ -71,7 +66,6 @@ const Dashboard = () => {
             })
           );
 
-          // Get events for this band
           const { data: eventsData, error: eventsError } = await supabase
             .from("events")
             .select("*")
@@ -83,10 +77,9 @@ const Dashboard = () => {
             id: event.id,
             bandId: event.band_id,
             title: event.title,
-            description: event.description,
             location: event.location,
             startTime: new Date(event.start_time),
-            attendees: [], // We'll implement attendees later
+            attendees: [],
             createdBy: event.created_by,
             createdAt: new Date(event.created_at),
           }));

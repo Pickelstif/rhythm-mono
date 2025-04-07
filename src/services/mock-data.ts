@@ -1,4 +1,3 @@
-
 import { Band, User } from "@/types";
 
 // Mock current user
@@ -64,10 +63,8 @@ export const mockBands: Band[] = [
         id: "event1",
         bandId: "band1",
         title: "Rehearsal",
-        description: "Weekly rehearsal at the studio",
-        startTime: new Date(2025, 3, 9, 19, 0),
-        endTime: new Date(2025, 3, 9, 22, 0),
         location: "Sonic Studio, Room 3",
+        startTime: new Date(2025, 3, 9, 19, 0),
         attendees: ["user1", "user2", "user3"],
         createdBy: "user1",
         createdAt: new Date(2025, 3, 2)
@@ -76,10 +73,8 @@ export const mockBands: Band[] = [
         id: "event2",
         bandId: "band1",
         title: "Live at Jazz Lounge",
-        description: "Performance at downtown jazz lounge",
-        startTime: new Date(2025, 3, 16, 20, 0),
-        endTime: new Date(2025, 3, 16, 23, 0),
         location: "The Jazz Lounge",
+        startTime: new Date(2025, 3, 16, 20, 0),
         attendees: ["user1", "user2", "user3"],
         createdBy: "user1",
         createdAt: new Date(2025, 3, 3)
@@ -138,10 +133,8 @@ export const mockBands: Band[] = [
         id: "event3",
         bandId: "band2",
         title: "Studio Session",
-        description: "Recording session for new EP",
-        startTime: new Date(2025, 3, 10, 13, 0),
-        endTime: new Date(2025, 3, 10, 18, 0),
         location: "Soundwave Studios",
+        startTime: new Date(2025, 3, 10, 13, 0),
         attendees: ["user1", "user4", "user5"],
         createdBy: "user4",
         createdAt: new Date(2025, 3, 1)

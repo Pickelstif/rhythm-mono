@@ -29,7 +29,6 @@ export type Event = {
   id: string;
   bandId: string;
   title: string;
-  description?: string;
   location?: string;
   startTime: Date;
   attendees: string[]; // array of user IDs

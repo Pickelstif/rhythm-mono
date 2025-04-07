@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Band, Event, BandMember } from "@/types";
@@ -26,7 +25,6 @@ const BandDetail = () => {
       if (!bandId || !user) return;
       
       try {
-        // Get band details
         const { data: bandData, error: bandError } = await supabase
           .from("bands")
           .select("*")
@@ -36,7 +34,6 @@ const BandDetail = () => {
         if (bandError) throw bandError;
         if (!bandData) return;
 
-        // Get band members
         const { data: members, error: membersError } = await supabase
           .from("band_members")
           .select("user_id, role")
@@ -44,7 +41,6 @@ const BandDetail = () => {
 
         if (membersError) throw membersError;
 
-        // Get user details for each member
         const memberDetails = await Promise.all(
           members.map(async (member) => {
             const { data: userData, error: userError } = await supabase
@@ -64,7 +60,6 @@ const BandDetail = () => {
           })
         );
 
-        // Get band events with updated schema
         const { data: events, error: eventsError } = await supabase
           .from("events")
           .select("*")
@@ -76,10 +71,9 @@ const BandDetail = () => {
           id: event.id,
           bandId: event.band_id,
           title: event.title,
-          description: event.description,
           location: event.location,
           startTime: new Date(event.start_time),
-          attendees: [], // We'll implement attendees later
+          attendees: [],
           createdBy: event.created_by,
           createdAt: new Date(event.created_at),
         })) || [];
@@ -190,9 +184,6 @@ const BandDetail = () => {
                 <Card key={event.id}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl">{event.title}</CardTitle>
-                    {event.description && (
-                      <CardDescription>{event.description}</CardDescription>
-                    )}
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">

@@ -128,8 +128,9 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           date: string
-          description: string | null
           id: string
+          location: string | null
+          start_time: string
           title: string
         }
         Insert: {
@@ -137,8 +138,9 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           date: string
-          description?: string | null
           id?: string
+          location?: string | null
+          start_time: string
           title: string
         }
         Update: {
@@ -146,8 +148,9 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           date?: string
-          description?: string | null
           id?: string
+          location?: string | null
+          start_time?: string
           title?: string
         }
         Relationships: [
