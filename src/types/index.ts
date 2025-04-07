@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -29,9 +30,8 @@ export type Event = {
   bandId: string;
   title: string;
   description?: string;
-  startTime: Date;
-  endTime: Date;
   location?: string;
+  startTime: Date;
   attendees: string[]; // array of user IDs
   createdBy: string; // user ID
   createdAt: Date;

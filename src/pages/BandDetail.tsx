@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Band, Event, BandMember } from "@/types";
@@ -63,7 +64,7 @@ const BandDetail = () => {
           })
         );
 
-        // Get band events
+        // Get band events with updated schema
         const { data: events, error: eventsError } = await supabase
           .from("events")
           .select("*")
@@ -76,8 +77,8 @@ const BandDetail = () => {
           bandId: event.band_id,
           title: event.title,
           description: event.description,
-          startTime: new Date(event.date),
-          endTime: new Date(event.date), // Using the same date for now since we don't have end_time
+          location: event.location,
+          startTime: new Date(event.start_time),
           attendees: [], // We'll implement attendees later
           createdBy: event.created_by,
           createdAt: new Date(event.created_at),
@@ -201,8 +202,14 @@ const BandDetail = () => {
                       </div>
                       <div className="flex items-center text-sm">
                         <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {format(event.startTime, "h:mm a")} - {format(event.endTime, "h:mm a")}
+                        {format(event.startTime, "h:mm a")}
                       </div>
+                      {event.location && (
+                        <div className="flex items-center text-sm">
+                          <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                          {event.location}
+                        </div>
+                      )}
                       <div className="flex items-center text-sm">
                         <Users className="mr-2 h-4 w-4 text-muted-foreground" />
                         {event.attendees.length} attendees

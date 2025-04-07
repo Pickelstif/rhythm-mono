@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Band } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -70,11 +71,31 @@ const Dashboard = () => {
             })
           );
 
+          // Get events for this band
+          const { data: eventsData, error: eventsError } = await supabase
+            .from("events")
+            .select("*")
+            .eq("band_id", band.id);
+
+          if (eventsError) throw eventsError;
+
+          const events = eventsData.map(event => ({
+            id: event.id,
+            bandId: event.band_id,
+            title: event.title,
+            description: event.description,
+            location: event.location,
+            startTime: new Date(event.start_time),
+            attendees: [], // We'll implement attendees later
+            createdBy: event.created_by,
+            createdAt: new Date(event.created_at),
+          }));
+
           return {
             id: band.id,
             name: band.name,
             members: memberDetails,
-            events: [], // We'll implement events fetching later
+            events: events,
             createdAt: new Date(band.created_at || ""),
           };
         })
@@ -153,6 +174,11 @@ const Dashboard = () => {
                         <CalendarDays className="h-3 w-3 mr-1" />
                         {format(event.startTime, "EEE, MMM d • h:mm a")}
                       </div>
+                      {event.location && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {event.location}
+                        </div>
+                      )}
                     </div>
                   ))
                 ) : (
