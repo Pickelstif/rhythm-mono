@@ -9,9 +9,16 @@ interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEventCreated: () => void;
+  initialDate?: Date | null;
 }
 
-export function CreateEventModal({ bandId, isOpen, onClose, onEventCreated }: CreateEventModalProps) {
+export function CreateEventModal({ 
+  bandId, 
+  isOpen, 
+  onClose, 
+  onEventCreated,
+  initialDate 
+}: CreateEventModalProps) {
   const handleSubmit = async (values: FormValues) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -59,7 +66,11 @@ export function CreateEventModal({ bandId, isOpen, onClose, onEventCreated }: Cr
         <DialogHeader>
           <DialogTitle>Create New Event</DialogTitle>
         </DialogHeader>
-        <CreateEventForm bandId={bandId} onSubmit={handleSubmit} />
+        <CreateEventForm 
+          bandId={bandId} 
+          onSubmit={handleSubmit} 
+          initialDate={initialDate}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -25,31 +25,31 @@ import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
+const eventFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   eventType: z.enum(["rehearsal", "gig"]),
+  date: z.date(),
   location: z.string().optional(),
-  date: z.date({
-    required_error: "Date is required",
-  }),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
 });
 
-export type FormValues = z.infer<typeof formSchema>;
+export type FormValues = z.infer<typeof eventFormSchema>;
 
 interface CreateEventFormProps {
   bandId: string;
   onSubmit: (values: FormValues) => Promise<void>;
+  initialDate?: Date | null;
 }
 
-export function CreateEventForm({ bandId, onSubmit }: CreateEventFormProps) {
+export function CreateEventForm({ bandId, onSubmit, initialDate }: CreateEventFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: "",
       eventType: "rehearsal",
+      date: initialDate || new Date(),
       location: "",
       startTime: "19:00",
     },
@@ -107,6 +107,42 @@ export function CreateEventForm({ bandId, onSubmit }: CreateEventFormProps) {
 
         <FormField
           control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  {...field}
+                  value={field.value.toISOString().split('T')[0]}
+                  onChange={(e) => field.onChange(new Date(e.target.value))}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="startTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Start Time</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input type="time" {...field} />
+                  <Clock className="absolute right-3 top-3 h-4 w-4 opacity-50" />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="location"
           render={({ field }) => (
             <FormItem>
@@ -118,67 +154,6 @@ export function CreateEventForm({ bandId, onSubmit }: CreateEventFormProps) {
             </FormItem>
           )}
         />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0))
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="startTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Start Time</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input type="time" {...field} />
-                    <Clock className="absolute right-3 top-3 h-4 w-4 opacity-50" />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Creating..." : "Create Event"}
