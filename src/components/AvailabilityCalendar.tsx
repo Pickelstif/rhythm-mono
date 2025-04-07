@@ -6,20 +6,32 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Copy } from "lucide-react";
 
 type AvailabilityCalendarProps = {
   bandId: string;
 };
+
+// Predefined colors for members
+const MEMBER_COLORS = [
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-purple-500',
+  'bg-pink-500',
+  'bg-orange-500',
+  'bg-teal-500',
+  'bg-indigo-500',
+  'bg-rose-500',
+  'bg-amber-500',
+  'bg-emerald-500',
+];
 
 const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
   const { user } = useAuth();
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [bandAvailability, setBandAvailability] = useState<Record<string, { name: string; dates: Date[] }>>({});
+  const [bandAvailability, setBandAvailability] = useState<Record<string, { name: string; dates: Date[]; color: string }>>({});
   const [isLeader, setIsLeader] = useState(false);
-  const [inviteLink, setInviteLink] = useState("");
 
   // Fetch existing availability for the band
   useEffect(() => {
@@ -38,10 +50,6 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
         if (memberError) throw memberError;
         setIsLeader(memberData.role === "leader");
 
-        // Generate invite link
-        const baseUrl = window.location.origin;
-        setInviteLink(`${baseUrl}/join-band/${bandId}`);
-
         // Get all members of the band
         const { data: members, error: membersError } = await supabase
           .from("band_members")
@@ -51,7 +59,7 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
         if (membersError) throw membersError;
 
         // Get availability for each member
-        const availabilityPromises = members.map(async (member) => {
+        const availabilityPromises = members.map(async (member, index) => {
           const { data: userData, error: userError } = await supabase
             .from("users")
             .select("name, email")
@@ -72,17 +80,19 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
             userId: member.user_id,
             name: userData.name || userData.email || "Unknown",
             dates: availabilityData?.map(avail => new Date(avail.date)) || [],
+            color: MEMBER_COLORS[index % MEMBER_COLORS.length],
           };
         });
 
         const memberAvailability = await Promise.all(availabilityPromises);
         
         // Convert to the format expected by the calendar
-        const availabilityMap: Record<string, { name: string; dates: Date[] }> = {};
+        const availabilityMap: Record<string, { name: string; dates: Date[]; color: string }> = {};
         memberAvailability.forEach(member => {
           availabilityMap[member.userId] = {
             name: member.name,
             dates: member.dates,
+            color: member.color,
           };
         });
 
@@ -103,15 +113,6 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
 
     fetchAvailability();
   }, [bandId, user]);
-
-  const handleCopyInviteLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      toast.success("Invite link copied to clipboard");
-    } catch (error) {
-      toast.error("Failed to copy invite link");
-    }
-  };
 
   const handleDateClick = (date: Date) => {
     setSelectedDates(prev => {
@@ -164,12 +165,13 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
 
       if (userError) throw userError;
 
-      // Update local state
+      // Update local state while preserving the existing color
       setBandAvailability(prev => ({
         ...prev,
         [user.id]: {
           name: userData.name || user.email || "You",
           dates: selectedDates,
+          color: prev[user.id]?.color || MEMBER_COLORS[0], // Use existing color or default to first color
         },
       }));
 
@@ -227,7 +229,7 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
           allMembersAvailable && !isSelected && "text-amber-400"
         )}>{day.getDate()}</span>
         {bandAvailability && !allMembersAvailable && availableMembers.length > 0 && (
-          <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-0.5 translate-y-1">
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-0.5 translate-y-1">
             {Object.entries(bandAvailability)
               .filter(([_, memberData]) => 
                 memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
@@ -236,8 +238,8 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
                 <div 
                   key={index}
                   className={cn(
-                    "h-1 w-1 rounded-full",
-                    memberId === user?.id ? "bg-primary" : "bg-muted-foreground/50"
+                    "h-1.5 w-1.5 rounded-full",
+                    memberData.color
                   )}
                   title={memberData.name}
                 />
@@ -258,25 +260,7 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
   }
 
   return (
-    <div className="space-y-6 p-4 bg-card rounded-lg border shadow-sm">
-      {isLeader && (
-        <div className="space-y-2">
-          <h3 className="font-medium text-sm text-muted-foreground">Invite Members</h3>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono truncate">
-              {inviteLink}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleCopyInviteLink}
-              className="shrink-0"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+    <div className="space-y-6 p-6 bg-card rounded-lg border shadow-sm">
       <div className="text-sm text-muted-foreground text-center">
         Click on dates to select/deselect your availability
       </div>
@@ -285,7 +269,7 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
           mode="multiple"
           selected={selectedDates}
           onSelect={setSelectedDates}
-          className="rounded-lg border-none"
+          className="rounded-lg border-none scale-110"
           components={{
             Day: ({ date, ...props }) => {
               return (
@@ -308,8 +292,8 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
                 className="flex items-center space-x-2"
               >
                 <div className={cn(
-                  "h-3 w-3 rounded-full",
-                  memberId === user?.id ? "bg-primary" : "bg-muted-foreground/50"
+                  "h-4 w-4 rounded-full",
+                  memberData.color
                 )} />
                 <span className="text-sm font-medium">{memberData.name}</span>
               </div>

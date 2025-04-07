@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, MapPin, Plus, Clock, Users } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Clock, Users, Copy } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Footer from '@/components/Footer';
+import { toast } from "sonner";
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
@@ -143,9 +144,30 @@ const BandDetail = () => {
       <Header />
       <main className="container py-8 flex-1">
         <div className="flex justify-between items-center mb-6">
-          <div>
+          <div className="space-y-2">
             <h1 className="text-3xl font-bold">{band.name}</h1>
             {band.description && <p className="text-muted-foreground">{band.description}</p>}
+            {isLeader && (
+              <div className="space-y-2 pt-2">
+                <h3 className="font-medium text-sm text-muted-foreground">Invite Members</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono truncate">
+                    {`${window.location.origin}/join-band/${band.id}`}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/join-band/${band.id}`);
+                      toast.success("Invite link copied to clipboard");
+                    }}
+                    className="shrink-0"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           {isLeader && (
             <Button>
