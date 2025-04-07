@@ -222,7 +222,30 @@ const BandDetail = () => {
         {band && (
           <>
             <div className="flex justify-between items-center mb-8">
-              <h1 className="text-4xl font-bold">{band.name}</h1>
+              <div className="space-y-2">
+                <h1 className="text-4xl font-bold">{band.name}</h1>
+                {isLeader && (
+                  <div className="space-y-2 pt-2">
+                    <h3 className="font-medium text-sm text-muted-foreground">Invite Members</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono truncate">
+                        {`${window.location.origin}/join-band/${band.id}`}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/join-band/${band.id}`);
+                          toast.success("Invite link copied to clipboard");
+                        }}
+                        className="shrink-0"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
               {isLeader && (
                 <Button onClick={() => setIsCreateEventModalOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
