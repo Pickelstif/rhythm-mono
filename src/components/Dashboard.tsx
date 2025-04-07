@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import CreateBandDialog from "./CreateBandDialog";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ const Dashboard = () => {
 
       if (!bandMembers || bandMembers.length === 0) {
         setBands([]);
+        setLoading(false);
         return;
       }
 

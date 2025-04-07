@@ -1,5 +1,5 @@
 import { UserProfile } from '../types';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 const parseNotificationPreferences = (prefString: string) => {
   try {
@@ -7,7 +7,6 @@ const parseNotificationPreferences = (prefString: string) => {
   } catch {
     return {
       emailNotifications: true,
-      pushNotifications: true,
       practiceReminders: true,
       newCollaborationRequests: true,
       messageNotifications: true,
@@ -36,15 +35,11 @@ export const profileService = {
 
       return {
         id: data.id,
-        username: data.email.split('@')[0], // Derive username from email since we don't store it separately
         email: data.email,
         fullName: data.name,
-        bio: '', // Not stored in users table
-        avatarUrl: '', // Not stored in users table
         instruments: data.instruments || [],
         notificationPreferences: parseNotificationPreferences(data.notification_pref),
         createdAt: data.created_at,
-        updatedAt: data.created_at, // Use created_at since we don't have updated_at
       };
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -73,15 +68,11 @@ export const profileService = {
 
       return {
         id: data.id,
-        username: data.email.split('@')[0],
         email: data.email,
         fullName: data.name,
-        bio: '', // Not stored in users table
-        avatarUrl: '', // Not stored in users table
         instruments: data.instruments || [],
         notificationPreferences: parseNotificationPreferences(data.notification_pref),
         createdAt: data.created_at,
-        updatedAt: data.created_at,
       };
     } catch (error) {
       console.error('Error updating profile:', error);
