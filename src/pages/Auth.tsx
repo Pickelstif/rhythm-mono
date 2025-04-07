@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, Navigate, useLocation } from 'react-router-dom';
@@ -6,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Music } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import logo from '@/assets/logo_light.png';
 
 const Auth = () => {
   const { signIn, signUp, resetPassword, updatePassword, user, loading } = useAuth();
@@ -195,11 +194,11 @@ const Auth = () => {
 
   if (mode === 'reset') {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md">
           <div className="flex items-center justify-center mb-8">
-            <Music className="h-8 w-8 text-rhythm-600 mr-2" />
-            <h1 className="text-3xl font-bold text-center">RhythmSync</h1>
+            <img src={logo} alt="RhythmSync Logo" className="h-12 w-auto mr-2" />
+            <span className="text-2xl font-bold">RhythmSync</span>
           </div>
           {renderForgotPassword()}
         </div>
@@ -209,11 +208,11 @@ const Auth = () => {
 
   if (mode === 'update') {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md">
           <div className="flex items-center justify-center mb-8">
-            <Music className="h-8 w-8 text-rhythm-600 mr-2" />
-            <h1 className="text-3xl font-bold text-center">RhythmSync</h1>
+            <img src={logo} alt="RhythmSync Logo" className="h-12 w-auto mr-2" />
+            <span className="text-2xl font-bold">RhythmSync</span>
           </div>
           {renderUpdatePassword()}
         </div>
@@ -222,11 +221,11 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 md:p-8">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center mb-8">
-          <Music className="h-8 w-8 text-rhythm-600 mr-2" />
-          <h1 className="text-3xl font-bold text-center">RhythmSync</h1>
+          <img src={logo} alt="RhythmSync Logo" className="h-12 w-auto mr-2" />
+          <span className="text-2xl font-bold">RhythmSync</span>
         </div>
         
         <Tabs defaultValue="signin" className="w-full" value={mode} onValueChange={(value) => setMode(value as 'signin' | 'signup')}>

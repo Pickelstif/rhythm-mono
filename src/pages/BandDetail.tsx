@@ -11,6 +11,7 @@ import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import Footer from '@/components/Footer';
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
@@ -116,6 +117,7 @@ const BandDetail = () => {
             <div className="h-64 bg-muted rounded"></div>
           </div>
         </main>
+        <Footer />
       </div>
     );
   }
@@ -131,14 +133,15 @@ const BandDetail = () => {
             <Link to="/dashboard">Back to Dashboard</Link>
           </Button>
         </main>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="container py-8">
+      <main className="container py-8 flex-1">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold">{band.name}</h1>
@@ -256,6 +259,7 @@ const BandDetail = () => {
           </TabsContent>
         </Tabs>
       </main>
+      <Footer />
     </div>
   );
 };

@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Bell, LogOut, Music, Settings, User } from "lucide-react";
+import { Bell, LogOut, Settings, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import logo from "@/assets/logo_light.png";
 
 const Header = () => {
   const { user, signOut } = useAuth();
@@ -25,7 +26,7 @@ const Header = () => {
     <header className="border-b border-border">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <Music className="h-6 w-6 text-rhythm-600" />
+          <img src={logo} alt="RhythmSync Logo" className="h-8 w-auto" />
           <Link to="/dashboard" className="text-xl font-bold">
             RhythmSync
           </Link>

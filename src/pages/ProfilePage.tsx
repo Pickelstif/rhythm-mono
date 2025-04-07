@@ -11,6 +11,7 @@ import { profileService } from '../services/profileService';
 import { toast } from '../components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import Header from '../components/Header';
+import Footer from '@/components/Footer';
 
 const availableInstruments: Instrument[] = [
   { id: 'piano', name: 'Piano', type: 'Keys' },
@@ -35,7 +36,7 @@ const defaultProfile: UserProfile = {
   createdAt: new Date().toISOString(),
 };
 
-export default function ProfilePage() {
+const ProfilePage = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
   const [isEditing, setIsEditing] = useState(false);
@@ -136,9 +137,9 @@ export default function ProfilePage() {
   );
 
   return (
-    <>
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <div className="container mx-auto py-8 space-y-6">
+      <div className="container mx-auto py-8 space-y-6 flex-1">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
             <strong className="font-bold">Error: </strong>
@@ -265,6 +266,9 @@ export default function ProfilePage() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+      <Footer />
+    </div>
   );
-} 
+};
+
+export default ProfilePage; 

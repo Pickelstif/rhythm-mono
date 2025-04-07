@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Music, Calendar, Users, Upload, Zap } from 'lucide-react';
+import { Calendar, Users, Upload, Zap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import logo from '@/assets/logo_dark.png';
+import Footer from '@/components/Footer';
 
 const FeatureCard = ({ 
   icon, 
@@ -32,14 +34,14 @@ const Landing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-rhythm-600 to-rhythm-800 text-white">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <nav className="flex justify-between items-center mb-16">
             <div className="flex items-center">
-              <Music className="h-8 w-8 mr-2" />
-              <span className="text-2xl font-bold">RhythmSync</span>
+              <img src={logo} alt="RhythmSync Logo" className="h-16 w-auto mr-4" />
+              <span className="text-4xl font-bold">RhythmSync</span>
             </div>
             <div>
               {user ? (
@@ -186,20 +188,7 @@ const Landing = () => {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <Music className="h-6 w-6 mr-2" />
-              <span className="text-xl font-bold">RhythmSync</span>
-            </div>
-            <div className="text-sm text-gray-400">
-              &copy; {new Date().getFullYear()} RhythmSync. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
