@@ -24,6 +24,7 @@ const BandDetail = () => {
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [bandAvailability, setBandAvailability] = useState<Map<string, Date[]>>(new Map());
 
   const fetchBand = async () => {
     if (!bandId || !user) return;
@@ -121,24 +122,39 @@ const BandDetail = () => {
             .gte("date", new Date().toISOString().split("T")[0]);
 
           if (availabilityError) throw availabilityError;
-          return availability?.map(a => new Date(a.date)) || [];
+          
+          // Convert dates to ISO strings and remove duplicates
+          const uniqueDates = new Set(
+            availability?.map(a => new Date(a.date).toISOString().split("T")[0]) || []
+          );
+          return Array.from(uniqueDates);
         })
       );
 
       // Find dates where all members are available
-      const allMemberDates = memberAvailability.flat();
-      const dateCounts = new Map<string, number>();
+      const allDates = new Set(memberAvailability.flat());
+      const commonDates: Date[] = [];
 
-      allMemberDates.forEach(date => {
-        const dateStr = date.toISOString().split("T")[0];
-        dateCounts.set(dateStr, (dateCounts.get(dateStr) || 0) + 1);
+      // For each date, check if all members have it
+      allDates.forEach(dateStr => {
+        const isCommonDate = memberAvailability.every(memberDates => 
+          memberDates.includes(dateStr)
+        );
+        
+        if (isCommonDate) {
+          commonDates.push(new Date(dateStr));
+        }
       });
 
-      const commonDates = Array.from(dateCounts.entries())
-        .filter(([_, count]) => count === members.length)
-        .map(([dateStr]) => new Date(dateStr));
+      // Sort dates chronologically
+      commonDates.sort((a, b) => a.getTime() - b.getTime());
 
-      setAvailableDates(commonDates);
+      // Update the band availability map
+      setBandAvailability(prev => {
+        const newMap = new Map(prev);
+        newMap.set(bandId, commonDates);
+        return newMap;
+      });
     } catch (error) {
       console.error("Error fetching availability:", error);
     }
@@ -270,13 +286,13 @@ const BandDetail = () => {
                           <p className="text-lg text-muted-foreground">
                             No events scheduled yet.
                           </p>
-                          {isLeader && availableDates.length > 0 && (
+                          {isLeader && bandAvailability.get(band.id)?.length > 0 && (
                             <div className="space-y-4">
                               <p className="text-muted-foreground">
                                 The following dates would be great for scheduling rehearsals or gigs, as all band members are available:
                               </p>
                               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {availableDates.map((date) => (
+                                {bandAvailability.get(band.id)?.map((date) => (
                                   <AvailabilitySuggestionCard
                                     key={date.toISOString()}
                                     date={date}
@@ -286,13 +302,13 @@ const BandDetail = () => {
                               </div>
                             </div>
                           )}
-                          {!isLeader && availableDates.length > 0 && (
+                          {!isLeader && bandAvailability.get(band.id)?.length > 0 && (
                             <div className="space-y-4">
                               <p className="text-muted-foreground">
                                 The following dates would be great for scheduling rehearsals or gigs, as all band members are available:
                               </p>
                               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {availableDates.map((date) => (
+                                {bandAvailability.get(band.id)?.map((date) => (
                                   <Card key={date.toISOString()}>
                                     <CardContent className="pt-6">
                                       <div className="flex items-center justify-between">
@@ -320,11 +336,11 @@ const BandDetail = () => {
                   </div>
                 ) : (
                   <div className="grid gap-6">
-                    {isLeader && availableDates.length > 0 && (
+                    {isLeader && bandAvailability.get(band.id)?.length > 0 && (
                       <div className="space-y-4">
                         <h3 className="text-lg font-semibold">Available Dates</h3>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                          {availableDates.map((date) => (
+                          {bandAvailability.get(band.id)?.map((date) => (
                             <AvailabilitySuggestionCard
                               key={date.toISOString()}
                               date={date}
@@ -334,14 +350,14 @@ const BandDetail = () => {
                         </div>
                       </div>
                     )}
-                    {!isLeader && availableDates.length > 0 && (
+                    {!isLeader && bandAvailability.get(band.id)?.length > 0 && (
                       <div className="space-y-4">
                         <h3 className="text-lg font-semibold">Available Dates</h3>
                         <p className="text-muted-foreground">
                           The following dates would be great for scheduling rehearsals or gigs, as all band members are available:
                         </p>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                          {availableDates.map((date) => (
+                          {bandAvailability.get(band.id)?.map((date) => (
                             <Card key={date.toISOString()}>
                               <CardContent className="pt-6">
                                 <div className="flex items-center justify-between">
@@ -416,7 +432,10 @@ const BandDetail = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <AvailabilityCalendar bandId={band.id} />
+                    <AvailabilityCalendar 
+                      bandId={band.id} 
+                      onAvailabilityChange={fetchMemberAvailability}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>
