@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 type AvailabilityCalendarProps = {
   bandId: string;
+  onAvailabilityChange?: () => void;
 };
 
 // Predefined colors for members
@@ -25,7 +26,7 @@ const MEMBER_COLORS = [
   'bg-emerald-500',
 ];
 
-const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
+const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCalendarProps) => {
   const { user } = useAuth();
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,6 +176,9 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
         },
       }));
 
+      // Notify parent component of availability change
+      onAvailabilityChange?.();
+
       toast.success("Availability updated successfully");
     } catch (error) {
       console.error("Error saving availability:", error);
@@ -271,7 +275,7 @@ const AvailabilityCalendar = ({ bandId }: AvailabilityCalendarProps) => {
           onSelect={setSelectedDates}
           className="rounded-lg border-none scale-110"
           components={{
-            Day: ({ date, ...props }) => {
+            Day: ({ date, displayMonth, ...props }) => {
               return (
                 <div {...props}>
                   {renderDay(date)}

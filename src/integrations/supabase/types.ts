@@ -132,6 +132,7 @@ export type Database = {
           location: string | null
           start_time: string
           title: string
+          event_type: string
         }
         Insert: {
           band_id?: string | null
@@ -142,6 +143,7 @@ export type Database = {
           location?: string | null
           start_time: string
           title: string
+          event_type: string
         }
         Update: {
           band_id?: string | null
@@ -152,6 +154,7 @@ export type Database = {
           location?: string | null
           start_time?: string
           title?: string
+          event_type?: string
         }
         Relationships: [
           {

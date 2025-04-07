@@ -51,6 +51,7 @@ CREATE TABLE public.events (
     location TEXT,
     date DATE NOT NULL,
     start_time TIME NOT NULL,
+    event_type TEXT NOT NULL DEFAULT 'rehearsal',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     CONSTRAINT events_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id),
     CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
