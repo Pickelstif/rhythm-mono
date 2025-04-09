@@ -86,25 +86,38 @@ const Landing = () => {
                     <span className="text-sm text-rhythm-800">Next: Thu 8pm</span>
                   </div>
                   <div className="grid grid-cols-7 gap-1 mb-3">
-                    {Array.from({ length: 7 }).map((_, i) => (
-                      <div key={i} className="text-center text-xs">
-                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+                    {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => (
+                      <div key={day} className="text-center text-xs font-medium text-gray-500">
+                        {day}
                       </div>
                     ))}
-                    {Array.from({ length: 28 }).map((_, i) => (
-                      <div 
-                        key={i + 7} 
-                        className={`h-8 rounded-sm flex items-center justify-center text-xs
-                          ${[3, 10, 17, 24].includes(i) ? 'bg-rhythm-500 text-white' : 
-                            [2, 9, 16, 23].includes(i) ? 'bg-rhythm-200' : 'bg-gray-100'}`}
-                      >
-                        {i + 1}
-                      </div>
-                    ))}
+                    {Array.from({ length: 28 }).map((_, i) => {
+                      const date = i + 1;
+                      // Mock availability data - showing some dates as fully available, some partially
+                      const isFullyAvailable = [4, 11, 18, 25].includes(date);
+                      const isPartiallyAvailable = [3, 10, 17, 24].includes(date);
+                      
+                      return (
+                        <div 
+                          key={date} 
+                          className={`h-8 rounded-sm flex items-center justify-center text-xs
+                            ${isFullyAvailable ? 'bg-rhythm-500 text-white' : 
+                              isPartiallyAvailable ? 'bg-rhythm-200' : 'bg-gray-100'}`}
+                        >
+                          {date}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="flex space-x-1">
-                    <div className="h-2 w-2 rounded-full bg-rhythm-500"></div>
-                    <div className="text-xs">Full band available</div>
+                  <div className="flex items-center space-x-4 text-xs">
+                    <div className="flex items-center space-x-1">
+                      <div className="h-2 w-2 rounded-full bg-rhythm-500"></div>
+                      <span>Full band available</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="h-2 w-2 rounded-full bg-rhythm-200"></div>
+                      <span>Partial availability</span>
+                    </div>
                   </div>
                 </div>
               </div>
