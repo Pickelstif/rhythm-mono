@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2 } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
@@ -15,6 +15,16 @@ import Footer from '@/components/Footer';
 import { toast } from "sonner";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { AvailabilitySuggestionCard } from "@/components/AvailabilitySuggestionCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
@@ -22,6 +32,8 @@ const BandDetail = () => {
   const [band, setBand] = useState<Band | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [deletingEvent, setDeletingEvent] = useState<{id: string, title: string} | null>(null);
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [bandAvailability, setBandAvailability] = useState<Map<string, Date[]>>(new Map());
@@ -192,11 +204,26 @@ const BandDetail = () => {
     } catch (error) {
       console.error("Error deleting event:", error);
       toast.error("Failed to delete event");
+    } finally {
+      setDeletingEvent(null);
     }
+  };
+
+  const confirmDeleteEvent = (event: Event) => {
+    setDeletingEvent({
+      id: event.id,
+      title: event.title
+    });
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEvent(event);
+    setIsCreateEventModalOpen(true);
   };
 
   const handleScheduleFromSuggestion = (date: Date) => {
     setSelectedDate(date);
+    setEditingEvent(null);
     setIsCreateEventModalOpen(true);
   };
 
@@ -397,13 +424,22 @@ const BandDetail = () => {
                                   </CardDescription>
                                 </div>
                                 {isLeader && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteEvent(event.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                  <div className="flex space-x-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleEditEvent(event)}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => confirmDeleteEvent(event)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 )}
                               </div>
                             </CardHeader>
@@ -487,10 +523,29 @@ const BandDetail = () => {
           onClose={() => {
             setIsCreateEventModalOpen(false);
             setSelectedDate(null);
+            setEditingEvent(null);
           }}
           onEventCreated={fetchBand}
           initialDate={selectedDate}
+          editingEvent={editingEvent}
         />
+
+        <AlertDialog open={!!deletingEvent} onOpenChange={(open) => !open && setDeletingEvent(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the event "{deletingEvent?.title}". This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deletingEvent && handleDeleteEvent(deletingEvent.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
       <Footer />
     </div>

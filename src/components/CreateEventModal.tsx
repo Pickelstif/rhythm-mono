@@ -3,6 +3,7 @@ import { CreateEventForm } from "./CreateEventForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FormValues } from "./CreateEventForm";
+import { Event } from "@/types";
 
 interface CreateEventModalProps {
   bandId: string;
@@ -10,6 +11,7 @@ interface CreateEventModalProps {
   onClose: () => void;
   onEventCreated: () => void;
   initialDate?: Date | null;
+  editingEvent?: Event | null;
 }
 
 export function CreateEventModal({ 
@@ -17,7 +19,8 @@ export function CreateEventModal({
   isOpen, 
   onClose, 
   onEventCreated,
-  initialDate 
+  initialDate,
+  editingEvent
 }: CreateEventModalProps) {
   const handleSubmit = async (values: FormValues) => {
     try {
@@ -32,31 +35,54 @@ export function CreateEventModal({
       const startTime = new Date(values.date);
       startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       
-      const { error } = await supabase
-        .from("events")
-        .insert({
-          band_id: bandId,
-          created_by: user.id,
-          title: values.title,
-          location: values.location || null,
-          date: formattedDate,
-          start_time: startTime.toISOString(),
-          event_type: values.eventType,
-        })
-        .select()
-        .single();
+      if (editingEvent) {
+        // Update existing event
+        const { error } = await supabase
+          .from("events")
+          .update({
+            title: values.title,
+            location: values.location || null,
+            date: formattedDate,
+            start_time: startTime.toISOString(),
+            event_type: values.eventType,
+          })
+          .eq("id", editingEvent.id);
 
-      if (error) {
-        console.error("Database error:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("Database error:", error);
+          throw new Error(error.message);
+        }
+
+        toast.success("Event updated successfully");
+      } else {
+        // Create new event
+        const { error } = await supabase
+          .from("events")
+          .insert({
+            band_id: bandId,
+            created_by: user.id,
+            title: values.title,
+            location: values.location || null,
+            date: formattedDate,
+            start_time: startTime.toISOString(),
+            event_type: values.eventType,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Database error:", error);
+          throw new Error(error.message);
+        }
+
+        toast.success("Event created successfully");
       }
-
-      toast.success("Event created successfully");
+      
       onEventCreated();
       onClose();
     } catch (error) {
-      console.error("Error creating event:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to create event");
+      console.error(editingEvent ? "Error updating event:" : "Error creating event:", error);
+      toast.error(error instanceof Error ? error.message : editingEvent ? "Failed to update event" : "Failed to create event");
     }
   };
 
@@ -64,12 +90,13 @@ export function CreateEventModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Event</DialogTitle>
+          <DialogTitle>{editingEvent ? "Edit Event" : "Create New Event"}</DialogTitle>
         </DialogHeader>
         <CreateEventForm 
           bandId={bandId} 
           onSubmit={handleSubmit} 
           initialDate={initialDate}
+          editingEvent={editingEvent}
         />
       </DialogContent>
     </Dialog>

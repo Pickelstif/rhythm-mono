@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Event } from "@/types";
 
 const eventFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -39,28 +40,49 @@ interface CreateEventFormProps {
   bandId: string;
   onSubmit: (values: FormValues) => Promise<void>;
   initialDate?: Date | null;
+  editingEvent?: Event | null;
 }
 
-export function CreateEventForm({ bandId, onSubmit, initialDate }: CreateEventFormProps) {
+export function CreateEventForm({ bandId, onSubmit, initialDate, editingEvent }: CreateEventFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
-      title: "",
-      eventType: "rehearsal",
-      date: initialDate || new Date(),
-      location: "",
-      startTime: "19:00",
+      title: editingEvent?.title || "",
+      eventType: editingEvent?.eventType || "rehearsal",
+      date: editingEvent?.startTime || initialDate || new Date(),
+      location: editingEvent?.location || "",
+      startTime: editingEvent ? format(editingEvent.startTime, "HH:mm") : "19:00",
     },
   });
+
+  useEffect(() => {
+    if (editingEvent) {
+      form.reset({
+        title: editingEvent.title,
+        eventType: editingEvent.eventType,
+        date: editingEvent.startTime,
+        location: editingEvent.location || "",
+        startTime: format(editingEvent.startTime, "HH:mm"),
+      });
+    } else if (!form.formState.isDirty) {
+      form.reset({
+        title: "",
+        eventType: "rehearsal",
+        date: initialDate || new Date(),
+        location: "",
+        startTime: "19:00",
+      });
+    }
+  }, [editingEvent, initialDate, form]);
 
   const handleSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
       await onSubmit(values);
     } catch (error) {
-      console.error("Error creating event:", error);
+      console.error(editingEvent ? "Error updating event:" : "Error creating event:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -109,16 +131,36 @@ export function CreateEventForm({ bandId, onSubmit, initialDate }: CreateEventFo
           control={form.control}
           name="date"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Date</FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  {...field}
-                  value={field.value.toISOString().split('T')[0]}
-                  onChange={(e) => field.onChange(new Date(e.target.value))}
-                />
-              </FormControl>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "MMMM d, yyyy")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
@@ -131,10 +173,34 @@ export function CreateEventForm({ bandId, onSubmit, initialDate }: CreateEventFo
             <FormItem>
               <FormLabel>Start Time</FormLabel>
               <FormControl>
-                <div className="relative">
-                  <Input type="time" {...field} />
-                  <Clock className="absolute right-3 top-3 h-4 w-4 opacity-50" />
-                </div>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="max-h-[300px]">
+                    {Array.from({ length: 24 }).map((_, hour) => (
+                      [0, 15, 30, 45].map((minute) => {
+                        const formattedHour = hour.toString().padStart(2, '0');
+                        const formattedMinute = minute.toString().padStart(2, '0');
+                        const timeValue = `${formattedHour}:${formattedMinute}`;
+                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                        const displayTime = `${displayHour}:${formattedMinute} ${hour >= 12 ? 'PM' : 'AM'}`;
+                        
+                        return (
+                          <SelectItem key={timeValue} value={timeValue}>
+                            {displayTime}
+                          </SelectItem>
+                        );
+                      })
+                    )).flat()}
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -156,7 +222,7 @@ export function CreateEventForm({ bandId, onSubmit, initialDate }: CreateEventFo
         />
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Event"}
+          {isSubmitting ? (editingEvent ? "Updating..." : "Creating...") : (editingEvent ? "Update Event" : "Create Event")}
         </Button>
       </form>
     </Form>

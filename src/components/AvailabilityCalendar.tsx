@@ -212,11 +212,14 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
     
     const dateStr = format(day, 'yyyy-MM-dd');
     const availableMembers = Object.entries(bandAvailability)
-      .filter(([_, memberData]) => 
-        memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
+      .filter(([memberId, memberData]) => 
+        memberId !== user?.id && memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
       );
     
-    const allMembersAvailable = availableMembers.length === Object.keys(bandAvailability).length;
+    // Count all members including current user for all-members-available check
+    const allMembersCount = Object.keys(bandAvailability).length;
+    const allMembersAvailable = availableMembers.length === allMembersCount - 1 && // All other members
+                               selectedDates.some(d => format(d, 'yyyy-MM-dd') === dateStr); // Plus current user
     
     return (
       <div 
@@ -232,11 +235,11 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
           "text-sm font-medium",
           allMembersAvailable && !isSelected && "text-amber-400"
         )}>{day.getDate()}</span>
-        {bandAvailability && !allMembersAvailable && availableMembers.length > 0 && (
+        {bandAvailability && availableMembers.length > 0 && (
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-0.5 translate-y-1">
             {Object.entries(bandAvailability)
-              .filter(([_, memberData]) => 
-                memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
+              .filter(([memberId, memberData]) => 
+                memberId !== user?.id && memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
               )
               .map(([memberId, memberData], index) => (
                 <div 
@@ -290,7 +293,9 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
         <div className="space-y-3">
           <h3 className="font-medium text-sm text-muted-foreground">Member Availability</h3>
           <div className="flex flex-wrap gap-4">
-            {Object.entries(bandAvailability).map(([memberId, memberData]) => (
+            {Object.entries(bandAvailability)
+              .filter(([memberId]) => memberId !== user?.id)
+              .map(([memberId, memberData]) => (
               <div 
                 key={memberId}
                 className="flex items-center space-x-2"
@@ -302,6 +307,14 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
                 <span className="text-sm font-medium">{memberData.name}</span>
               </div>
             ))}
+            <div className="flex items-center space-x-2">
+              <div className="h-4 w-4 rounded-full bg-primary" />
+              <span className="text-sm font-medium">You (selected dates)</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="h-4 w-4 rounded-full text-amber-400 ring-2 ring-amber-400" />
+              <span className="text-sm font-medium">All members available</span>
+            </div>
           </div>
         </div>
         <Button 
