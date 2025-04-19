@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { checkUserIsLeader, cleanupPastEvents } from '@/utils/cleanupEvents';
 
 type AuthContextType = {
   session: Session | null;
@@ -23,11 +24,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Function to check if user is a leader and clean up past events
+  const handleUserSession = async (session: Session | null) => {
+    if (session?.user) {
+      const isLeader = await checkUserIsLeader(session.user.id);
+      if (isLeader) {
+        await cleanupPastEvents();
+      }
+    }
+  };
+
   useEffect(() => {
-    const setData = (session: Session | null) => {
+    const setData = async (session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Check if user is a leader and clean up past events
+      await handleUserSession(session);
     };
 
     // Set up auth state listener first
@@ -48,10 +62,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         throw error;
+      }
+      
+      // Explicitly check for leader role after sign-in
+      if (data.user) {
+        const isLeader = await checkUserIsLeader(data.user.id);
+        if (isLeader) {
+          await cleanupPastEvents();
+        }
       }
       
       navigate('/');
