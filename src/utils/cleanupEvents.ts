@@ -9,23 +9,26 @@ export const cleanupPastEvents = async (): Promise<void> => {
       return;
     }
 
-    const response = await fetch('https://ndypjhbdytqcuenohppd.supabase.co/functions/v1/delete-past-events', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authData.session.access_token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Edge function responded with status: ${response.status}`);
+    // Use the supabase client to directly delete past events instead of calling the edge function
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Format as YYYY-MM-DD
+    const formattedDate = yesterday.toISOString().split('T')[0];
+    
+    const { data, error, count } = await supabase
+      .from('events')
+      .delete({ count: 'exact' })
+      .lt('date', formattedDate);
+    
+    if (error) {
+      throw error;
     }
-
-    const result = await response.json();
-    console.log('Past events cleanup result:', result);
-
-    if (result.deleted_count > 0) {
-      toast.success(`Cleaned up ${result.deleted_count} past events`);
+    
+    console.log('Past events cleanup result:', { deleted_count: count });
+    
+    if (count && count > 0) {
+      toast.success(`Cleaned up ${count} past events`);
     }
   } catch (error) {
     console.error('Error cleaning up past events:', error);
