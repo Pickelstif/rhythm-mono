@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Band, Event, BandMember } from "@/types";
+import { Band, Event, BandMember, Song } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil, Music, ExternalLink, FileText, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CreateSongModal } from "@/components/CreateSongModal";
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
@@ -37,6 +38,13 @@ const BandDetail = () => {
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [bandAvailability, setBandAvailability] = useState<Map<string, Date[]>>(new Map());
+  
+  // New state variables for songs
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [isAddSongModalOpen, setIsAddSongModalOpen] = useState(false);
+  const [editingSong, setEditingSong] = useState<Song | null>(null);
+  const [deletingSong, setDeletingSong] = useState<{id: string, title: string} | null>(null);
+  const [songsheetUploading, setSongsheetUploading] = useState(false);
 
   const fetchBand = async () => {
     if (!bandId || !user) return;
@@ -172,6 +180,36 @@ const BandDetail = () => {
     }
   };
 
+  const fetchSongs = async () => {
+    if (!bandId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("songs")
+        .select("*")
+        .eq("band_id", bandId)
+        .order("title");
+
+      if (error) throw error;
+
+      const formattedSongs = data?.map(song => ({
+        id: song.id,
+        bandId: song.band_id,
+        title: song.title,
+        artist: song.artist,
+        spotifyLink: song.spotify_link,
+        songSheetPath: song.song_sheet_path,
+        createdBy: song.created_by,
+        createdAt: new Date(song.created_at),
+      })) || [];
+
+      setSongs(formattedSongs);
+    } catch (error) {
+      console.error("Error fetching songs:", error);
+      toast.error("Failed to load songs");
+    }
+  };
+
   useEffect(() => {
     fetchBand();
   }, [bandId, user]);
@@ -179,6 +217,12 @@ const BandDetail = () => {
   useEffect(() => {
     if (band) {
       fetchMemberAvailability();
+    }
+  }, [band]);
+
+  useEffect(() => {
+    if (band) {
+      fetchSongs();
     }
   }, [band]);
 
@@ -206,6 +250,25 @@ const BandDetail = () => {
       toast.error("Failed to delete event");
     } finally {
       setDeletingEvent(null);
+    }
+  };
+
+  const handleDeleteSong = async (songId: string) => {
+    try {
+      const { error } = await supabase
+        .from("songs")
+        .delete()
+        .eq("id", songId);
+
+      if (error) throw error;
+
+      toast.success("Song deleted successfully");
+      fetchSongs(); // Refresh songs list
+    } catch (error) {
+      console.error("Error deleting song:", error);
+      toast.error("Failed to delete song");
+    } finally {
+      setDeletingSong(null);
     }
   };
 
@@ -289,18 +352,13 @@ const BandDetail = () => {
                   </div>
                 )}
               </div>
-              {isLeader && (
-                <Button onClick={() => setIsCreateEventModalOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Event
-                </Button>
-              )}
             </div>
 
             <Tabs defaultValue="events" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="availability">Availability</TabsTrigger>
+                <TabsTrigger value="songs">Songs</TabsTrigger>
                 <TabsTrigger value="members">Members</TabsTrigger>
               </TabsList>
 
@@ -407,7 +465,15 @@ const BandDetail = () => {
                       </div>
                     )}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Scheduled Events</h3>
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold">Scheduled Events</h3>
+                        {isLeader && (
+                          <Button onClick={() => setIsCreateEventModalOpen(true)}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Event
+                          </Button>
+                        )}
+                      </div>
                       <div className="grid gap-6">
                         {sortEventsByDate(band.events).map((event) => (
                           <Card key={event.id}>
@@ -474,6 +540,135 @@ const BandDetail = () => {
                     />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="songs" className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Song Library</h3>
+                  {isLeader && (
+                    <Button onClick={() => setIsAddSongModalOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Song
+                    </Button>
+                  )}
+                </div>
+                {songs.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-lg text-muted-foreground">
+                          No songs in your library yet.
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {isLeader
+                            ? "Add songs to create a repertoire for your band."
+                            : "The band leader can add songs to the library."}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4">
+                    {songs.map((song) => (
+                      <Card key={song.id}>
+                        <CardContent className="pt-6">
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Music className="h-4 w-4 text-muted-foreground" />
+                                <h4 className="font-medium">{song.title}</h4>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                by {song.artist}
+                              </p>
+                            </div>
+                            {isLeader && (
+                              <div className="flex space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditingSong(song)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeletingSong({
+                                    id: song.id,
+                                    title: song.title
+                                  })}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-4">
+                            {song.spotifyLink && (
+                              <a
+                                href={song.spotifyLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-xs bg-secondary py-1 px-2 rounded-full hover:bg-secondary/80"
+                              >
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Spotify
+                              </a>
+                            )}
+                            {song.songSheetPath && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="inline-flex items-center text-xs py-1 px-2 rounded-full hover:bg-secondary/80"
+                                onClick={async (e) => {
+                                  // Set loading state on the button
+                                  const button = e.currentTarget;
+                                  const originalContent = button.innerHTML;
+                                  button.innerHTML = `<svg class="h-3 w-3 mr-1 animate-spin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Downloading...`;
+                                  
+                                  try {
+                                    console.log("Attempting to generate signed URL for:", song.songSheetPath);
+                                    const { data, error } = await supabase.storage
+                                      .from('song_sheets')
+                                      .createSignedUrl(song.songSheetPath, 60); // 60 seconds expiry
+                                    
+                                    if (error) {
+                                      console.error("Error creating signed URL:", error);
+                                      throw error;
+                                    }
+                                    
+                                    console.log("Signed URL generated:", data?.signedUrl);
+                                    
+                                    if (data?.signedUrl) {
+                                      window.open(data.signedUrl, '_blank');
+                                    } else {
+                                      console.error("No signed URL returned");
+                                      console.log("Trying direct public URL as fallback");
+                                      // Try direct public URL as fallback
+                                      const publicUrl = `https://ndypjhbdytqcuenohppd.supabase.co/storage/v1/object/public/song_sheets/${song.songSheetPath}`;
+                                      console.log("Using public URL:", publicUrl);
+                                      window.open(publicUrl, '_blank');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error getting download URL:', error);
+                                    toast.error('Failed to download song sheet');
+                                  } finally {
+                                    // Restore button content
+                                    button.innerHTML = originalContent;
+                                  }
+                                }}
+                              >
+                                <FileText className="h-3 w-3 mr-1" />
+                                Song Sheet
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="members" className="space-y-6">
@@ -546,6 +741,34 @@ const BandDetail = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={!!deletingSong} onOpenChange={(open) => !open && setDeletingSong(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the song "{deletingSong?.title}" from your library. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deletingSong && handleDeleteSong(deletingSong.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        <CreateSongModal
+          bandId={bandId || ""}
+          isOpen={isAddSongModalOpen || !!editingSong}
+          onClose={() => {
+            setIsAddSongModalOpen(false);
+            setEditingSong(null);
+          }}
+          onSongCreated={fetchSongs}
+          editingSong={editingSong}
+        />
       </main>
       <Footer />
     </div>

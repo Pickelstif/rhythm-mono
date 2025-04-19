@@ -12,6 +12,7 @@ export type Band = {
   description?: string;
   members: BandMember[];
   events: Event[];
+  songs?: Song[];
   createdAt: Date;
 };
 
@@ -32,6 +33,17 @@ export type Event = {
   startTime: Date;
   eventType: 'rehearsal' | 'gig';
   attendees: string[]; // array of user IDs
+  createdBy: string; // user ID
+  createdAt: Date;
+};
+
+export type Song = {
+  id: string;
+  bandId: string;
+  title: string;
+  artist: string;
+  spotifyLink?: string;
+  songSheetPath?: string;
   createdBy: string; // user ID
   createdAt: Date;
 };

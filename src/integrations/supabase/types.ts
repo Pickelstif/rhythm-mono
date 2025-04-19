@@ -235,6 +235,54 @@ export type Database = {
         }
         Relationships: []
       }
+      songs: {
+        Row: {
+          id: string
+          band_id: string | null
+          title: string
+          artist: string
+          spotify_link: string | null
+          song_sheet_path: string | null
+          created_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          band_id: string
+          title: string
+          artist: string
+          spotify_link?: string | null
+          song_sheet_path?: string | null
+          created_by: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          band_id?: string | null
+          title?: string
+          artist?: string
+          spotify_link?: string | null
+          song_sheet_path?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "songs_band_id_fkey"
+            columns: ["band_id"]
+            isOneToOne: false
+            referencedRelation: "bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "songs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
