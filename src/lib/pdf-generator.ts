@@ -3,7 +3,70 @@ import { format } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Fetches a song sheet PDF from storage and embeds it into a PDF document
+ * Fetches an image file from storage and embeds it into a PDF document
+ */
+async function fetchAndEmbedImage(
+  imageUrl: string,
+  title: string,
+  pdfDoc: PDFDocument,
+  pageWidth: number,
+  pageHeight: number
+): Promise<{ success: boolean, pages: number }> {
+  try {
+    // Fetch the image data
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      console.error(`Error fetching image for "${title}":`, response.statusText);
+      return { success: false, pages: 0 };
+    }
+
+    const imageBytes = await response.arrayBuffer();
+    
+    // Create a new page for the image
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
+    
+    // Embed the image
+    const image = await pdfDoc.embedJpg(imageBytes).catch(async () => {
+      // If not a JPG, try PNG
+      return await pdfDoc.embedPng(imageBytes);
+    });
+    
+    // Calculate dimensions to fit the page while maintaining aspect ratio
+    const imageAspectRatio = image.width / image.height;
+    const pageAspectRatio = pageWidth / pageHeight;
+    
+    let imageWidth, imageHeight;
+    if (imageAspectRatio > pageAspectRatio) {
+      // Image is wider than page
+      imageWidth = pageWidth - 100; // Leave margins
+      imageHeight = imageWidth / imageAspectRatio;
+    } else {
+      // Image is taller than page
+      imageHeight = pageHeight - 100; // Leave margins
+      imageWidth = imageHeight * imageAspectRatio;
+    }
+    
+    // Center the image on the page
+    const x = (pageWidth - imageWidth) / 2;
+    const y = (pageHeight - imageHeight) / 2;
+    
+    // Draw the image
+    page.drawImage(image, {
+      x,
+      y,
+      width: imageWidth,
+      height: imageHeight,
+    });
+    
+    return { success: true, pages: 1 };
+  } catch (error) {
+    console.error(`Error embedding image for "${title}":`, error);
+    return { success: false, pages: 0 };
+  }
+}
+
+/**
+ * Fetches a song sheet PDF or image from storage and embeds it into a PDF document
  */
 async function fetchAndEmbedSongSheet(
   songId: string, 
@@ -43,25 +106,51 @@ async function fetchAndEmbedSongSheet(
       signedUrl = urlData.signedUrl;
     }
     
-    // Fetch the PDF data
+    // Fetch the file first to determine its type
     const response = await fetch(signedUrl);
     if (!response.ok) {
       console.error(`Error fetching song sheet for "${title}":`, response.statusText);
       return { success: false, pages: 0 };
     }
+
+    const fileBytes = await response.arrayBuffer();
     
-    const pdfBytes = await response.arrayBuffer();
+    // Try to determine file type from content type or file extension
+    const contentType = response.headers.get('content-type') || '';
+    const isImage = /\.(jpg|jpeg|png)$/i.test(signedUrl) || 
+                   contentType.includes('image/jpeg') || 
+                   contentType.includes('image/png');
     
-    // Embed the PDF
-    const songSheetDoc = await PDFDocument.load(pdfBytes);
-    const copiedPages = await pdfDoc.copyPages(songSheetDoc, songSheetDoc.getPageIndices());
-    
-    // Add all pages to the main document
-    copiedPages.forEach(page => {
-      pdfDoc.addPage(page);
-    });
-    
-    return { success: true, pages: copiedPages.length };
+    if (isImage) {
+      // Handle image files
+      const pageWidth = 595.28; // A4 width in points
+      const pageHeight = 841.89; // A4 height in points
+      return await fetchAndEmbedImage(signedUrl, title, pdfDoc, pageWidth, pageHeight);
+    } else {
+      try {
+        // Try to handle as PDF
+        const songSheetDoc = await PDFDocument.load(fileBytes);
+        const copiedPages = await pdfDoc.copyPages(songSheetDoc, songSheetDoc.getPageIndices());
+        
+        // Add all pages to the main document
+        copiedPages.forEach(page => {
+          pdfDoc.addPage(page);
+        });
+        
+        return { success: true, pages: copiedPages.length };
+      } catch (pdfError) {
+        console.error(`Error parsing PDF for "${title}":`, pdfError);
+        // If PDF parsing fails, try to handle as image as a fallback
+        try {
+          const pageWidth = 595.28;
+          const pageHeight = 841.89;
+          return await fetchAndEmbedImage(signedUrl, title, pdfDoc, pageWidth, pageHeight);
+        } catch (imageError) {
+          console.error(`Error handling file as image for "${title}":`, imageError);
+          return { success: false, pages: 0 };
+        }
+      }
+    }
   } catch (error) {
     console.error(`Error embedding song sheet for "${title}":`, error);
     return { success: false, pages: 0 };

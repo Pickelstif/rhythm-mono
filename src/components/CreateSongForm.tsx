@@ -38,9 +38,12 @@ export function CreateSongForm({ onSubmit, editingSong }: CreateSongFormProps) {
     const file = event.target.files?.[0] || null;
     
     if (file) {
-      // Verify it's a PDF
-      if (!file.type.includes("pdf")) {
-        setFileError("Only PDF files are allowed");
+      // Verify it's a PDF or image
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+      
+      if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+        setFileError("Only PDF, JPG, JPEG, and PNG files are allowed");
         return;
       }
       
@@ -109,11 +112,11 @@ export function CreateSongForm({ onSubmit, editingSong }: CreateSongFormProps) {
         />
         
         <div className="space-y-2">
-          <FormLabel>Song Sheet (PDF only, max 10MB)</FormLabel>
+          <FormLabel>Song Sheet (PDF or image, max 10MB)</FormLabel>
           <div className="border rounded-md p-2">
             <Input 
               type="file" 
-              accept=".pdf" 
+              accept=".pdf,.jpg,.jpeg,.png" 
               onChange={handleFileChange}
               className="cursor-pointer"
             />
