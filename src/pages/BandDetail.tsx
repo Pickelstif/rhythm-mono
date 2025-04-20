@@ -28,6 +28,7 @@ import {
 import { CreateSongModal } from "@/components/CreateSongModal";
 import { SetlistModal } from "@/components/SetlistModal";
 import { Database } from "@/integrations/supabase/types";
+import { ImportSpotifyPlaylistModal } from "@/components/ImportSpotifyPlaylistModal";
 
 // Type definitions for Supabase query results
 type SetlistRow = Database['public']['Tables']['setlists']['Row'];
@@ -55,6 +56,11 @@ const BandDetail = () => {
   const [isSetlistModalOpen, setIsSetlistModalOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [eventsWithSetlists, setEventsWithSetlists] = useState<Map<string, boolean>>(new Map());
+
+  const [isImportPlaylistModalOpen, setIsImportPlaylistModalOpen] = useState(false);
+
+  // TEMPORARY: State for delete all songs confirmation
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   const fetchBand = async () => {
     if (!bandId || !user) return;
@@ -342,6 +348,28 @@ const BandDetail = () => {
     setIsSetlistModalOpen(true);
   };
 
+  // TEMPORARY: Function to delete all songs
+  const handleDeleteAllSongs = async () => {
+    if (!bandId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("songs")
+        .delete()
+        .eq("band_id", bandId);
+
+      if (error) throw error;
+      
+      toast.success("All songs deleted successfully");
+      fetchSongs();
+    } catch (error) {
+      console.error("Error deleting songs:", error);
+      toast.error("Failed to delete songs");
+    } finally {
+      setShowDeleteAllConfirm(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -621,10 +649,27 @@ const BandDetail = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Song Library</h3>
                   {isLeader && (
-                    <Button onClick={() => setIsAddSongModalOpen(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Song
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setIsAddSongModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Song
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => setIsImportPlaylistModalOpen(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Import Spotify Playlist
+                      </Button>
+                      {/* TEMPORARY: Delete all songs button - Remove this before production */}
+                      <Button 
+                        variant="destructive"
+                        onClick={() => setShowDeleteAllConfirm(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete All Songs
+                      </Button>
+                    </div>
                   )}
                 </div>
                 {songs.length === 0 ? (
@@ -860,6 +905,34 @@ const BandDetail = () => {
             onSetlistUpdated={() => fetchEventsWithSetlists()}
           />
         )}
+
+        <ImportSpotifyPlaylistModal
+          isOpen={isImportPlaylistModalOpen}
+          onClose={() => setIsImportPlaylistModalOpen(false)}
+          bandId={bandId || ""}
+          onPlaylistImported={fetchSongs}
+        />
+
+        {/* TEMPORARY: Delete all songs confirmation dialog - Remove this before production */}
+        <AlertDialog open={showDeleteAllConfirm} onOpenChange={setShowDeleteAllConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete ALL songs from your band's library. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteAllSongs}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Yes, delete all songs
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
       <Footer />
     </div>
