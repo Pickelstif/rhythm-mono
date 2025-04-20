@@ -1,17 +1,40 @@
 import React from 'react';
-import logo from '@/assets/logo_dark.png';
+import { useTheme } from '@/context/ThemeContext';
+import logoLight from '@/assets/logo_light.png';
+import logoDark from '@/assets/logo_dark.png';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
+  const { theme } = useTheme();
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-gray-800 text-white py-8 mt-auto">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="flex items-center mb-4 md:mb-0">
-            <img src={logo} alt="RhythmSync Logo" className="h-10 w-auto mr-3" />
-            <span className="text-2xl font-bold">RhythmSync</span>
+    <footer className="fixed bottom-0 left-0 right-0 border-t border-rhythm-200/20 bg-red-50/80 dark:bg-red-950/20 backdrop-blur-sm z-50">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <img 
+              src={theme === 'dark' ? logoDark : logoLight} 
+              alt="RhythmSync Logo" 
+              className="h-8 w-auto" 
+            />
+            <span className="text-xl font-bold">RhythmSync</span>
           </div>
-          <div className="text-sm text-gray-400">
-            &copy; {new Date().getFullYear()} RhythmSync. All rights reserved.
+          
+          <nav className="flex gap-8 text-sm text-muted-foreground">
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/contact" className="hover:text-foreground transition-colors">
+              Contact
+            </Link>
+          </nav>
+
+          <div className="text-sm text-muted-foreground">
+            &copy; {currentYear} RhythmSync. All rights reserved.
           </div>
         </div>
       </div>

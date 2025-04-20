@@ -224,7 +224,7 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
     return (
       <div 
         className={cn(
-          "h-8 w-8 p-0 font-normal aria-selected:opacity-100 cursor-pointer rounded-full transition-colors duration-200",
+          "h-7 w-7 p-0 font-normal aria-selected:opacity-100 cursor-pointer rounded-full transition-colors duration-200",
           dayClass,
           isSelected ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" : "hover:bg-muted/50",
           "flex flex-col items-center justify-center relative"
@@ -236,7 +236,7 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
           allMembersAvailable && !isSelected && "text-amber-400"
         )}>{day.getDate()}</span>
         {bandAvailability && availableMembers.length > 0 && (
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-0.5 translate-y-1">
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-0.5 translate-y-1.5">
             {Object.entries(bandAvailability)
               .filter(([memberId, memberData]) => 
                 memberId !== user?.id && memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)

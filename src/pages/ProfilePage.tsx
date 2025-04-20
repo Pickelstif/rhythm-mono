@@ -11,7 +11,6 @@ import { profileService } from '../services/profileService';
 import { toast } from '../components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import Header from '../components/Header';
-import Footer from '@/components/Footer';
 
 const availableInstruments: Instrument[] = [
   { id: 'guitar', name: 'Guitar', type: '' },
@@ -265,7 +264,6 @@ const ProfilePage = () => {
           </TabsContent>
         </Tabs>
       </div>
-      <Footer />
     </div>
   );
 };

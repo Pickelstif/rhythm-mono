@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Band, Event, BandMember, Song } from "@/types";
+import { Band, Event, BandMember, Song, Setlist } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil, Music, ExternalLink, FileText, Loader2 } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil, Music, ExternalLink, FileText, Loader2, List, Download } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import Footer from '@/components/Footer';
 import { toast } from "sonner";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { AvailabilitySuggestionCard } from "@/components/AvailabilitySuggestionCard";
@@ -26,6 +25,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CreateSongModal } from "@/components/CreateSongModal";
+import { SetlistModal } from "@/components/SetlistModal";
+import { Database } from "@/integrations/supabase/types";
+import { ImportSpotifyPlaylistModal } from "@/components/ImportSpotifyPlaylistModal";
+
+// Type definitions for Supabase query results
+type SetlistRow = Database['public']['Tables']['setlists']['Row'];
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
@@ -45,6 +50,16 @@ const BandDetail = () => {
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [deletingSong, setDeletingSong] = useState<{id: string, title: string} | null>(null);
   const [songsheetUploading, setSongsheetUploading] = useState(false);
+
+  // State for setlist management
+  const [isSetlistModalOpen, setIsSetlistModalOpen] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
+  const [eventsWithSetlists, setEventsWithSetlists] = useState<Map<string, boolean>>(new Map());
+
+  const [isImportPlaylistModalOpen, setIsImportPlaylistModalOpen] = useState(false);
+
+  // TEMPORARY: State for delete all songs confirmation
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   const fetchBand = async () => {
     if (!bandId || !user) return;
@@ -210,6 +225,42 @@ const BandDetail = () => {
     }
   };
 
+  const fetchEventsWithSetlists = async () => {
+    if (!bandId || !band) return;
+    
+    try {
+      // Get all events for this band
+      const eventIds = band.events.map(event => event.id);
+      
+      if (eventIds.length === 0) return;
+      
+      // Check which events have setlists
+      const { data: setlists, error } = await supabase
+        .from("setlists")
+        .select("event_id")
+        .in("event_id", eventIds);
+
+      if (error) throw error;
+      
+      // Create a map of event IDs to boolean (has setlist)
+      const setlistMap = new Map<string, boolean>();
+      band.events.forEach(event => {
+        setlistMap.set(event.id, false);
+      });
+      
+      if (setlists) {
+        // Explicitly type the result
+        (setlists as Pick<SetlistRow, 'event_id'>[]).forEach(setlist => {
+          setlistMap.set(setlist.event_id, true);
+        });
+      }
+      
+      setEventsWithSetlists(setlistMap);
+    } catch (error) {
+      console.error("Error fetching setlists:", error);
+    }
+  };
+
   useEffect(() => {
     fetchBand();
   }, [bandId, user]);
@@ -217,6 +268,7 @@ const BandDetail = () => {
   useEffect(() => {
     if (band) {
       fetchMemberAvailability();
+      fetchEventsWithSetlists();
     }
   }, [band]);
 
@@ -290,6 +342,33 @@ const BandDetail = () => {
     setIsCreateEventModalOpen(true);
   };
 
+  const handleManageSetlist = (event: Event) => {
+    setCurrentEvent(event);
+    setIsSetlistModalOpen(true);
+  };
+
+  // TEMPORARY: Function to delete all songs
+  const handleDeleteAllSongs = async () => {
+    if (!bandId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("songs")
+        .delete()
+        .eq("band_id", bandId);
+
+      if (error) throw error;
+      
+      toast.success("All songs deleted successfully");
+      fetchSongs();
+    } catch (error) {
+      console.error("Error deleting songs:", error);
+      toast.error("Failed to delete songs");
+    } finally {
+      setShowDeleteAllConfirm(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -300,7 +379,6 @@ const BandDetail = () => {
             <div className="h-64 bg-muted rounded"></div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -316,7 +394,6 @@ const BandDetail = () => {
             <Link to="/dashboard">Back to Dashboard</Link>
           </Button>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -489,24 +566,47 @@ const BandDetail = () => {
                                     <span>{format(event.startTime, "h:mm a")}</span>
                                   </CardDescription>
                                 </div>
-                                {isLeader && (
-                                  <div className="flex space-x-1">
+                                <div className="flex space-x-1">
+                                  {eventsWithSetlists.get(event.id) ? (
                                     <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleEditEvent(event)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex items-center gap-1"
+                                      onClick={() => handleManageSetlist(event)}
                                     >
-                                      <Pencil className="h-4 w-4" />
+                                      <List className="h-4 w-4" />
+                                      Edit Setlist
                                     </Button>
+                                  ) : (
                                     <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => confirmDeleteEvent(event)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex items-center gap-1"
+                                      onClick={() => handleManageSetlist(event)}
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      <Plus className="h-4 w-4" />
+                                      Add Setlist
                                     </Button>
-                                  </div>
-                                )}
+                                  )}
+                                  {isLeader && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleEditEvent(event)}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => confirmDeleteEvent(event)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </CardHeader>
                             <CardContent>
@@ -546,10 +646,27 @@ const BandDetail = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Song Library</h3>
                   {isLeader && (
-                    <Button onClick={() => setIsAddSongModalOpen(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Song
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setIsAddSongModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Song
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => setIsImportPlaylistModalOpen(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Import Spotify Playlist
+                      </Button>
+                      {/* TEMPORARY: Delete all songs button - Remove this before production */}
+                      <Button 
+                        variant="destructive"
+                        onClick={() => setShowDeleteAllConfirm(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete All Songs
+                      </Button>
+                    </div>
                   )}
                 </div>
                 {songs.length === 0 ? (
@@ -568,106 +685,108 @@ const BandDetail = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid gap-4">
-                    {songs.map((song) => (
-                      <Card key={song.id}>
-                        <CardContent className="pt-6">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-1">
+                  <Card>
+                    <CardContent className="p-0">
+                      <ul className="divide-y">
+                        {songs.map((song) => (
+                          <li key={song.id} className="p-4 hover:bg-muted/50">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <div>
+                                  <h4 className="font-medium">{song.title}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {song.artist}
+                                  </p>
+                                </div>
+                              </div>
                               <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-medium">{song.title}</h4>
+                                {song.spotifyLink && (
+                                  <a
+                                    href={song.spotifyLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center text-xs bg-secondary py-1 px-2 rounded-full hover:bg-secondary/80"
+                                  >
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    Spotify
+                                  </a>
+                                )}
+                                {song.songSheetPath && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="inline-flex items-center text-xs py-1 px-2 rounded-full hover:bg-secondary/80"
+                                    onClick={async (e) => {
+                                      // Set loading state on the button
+                                      const button = e.currentTarget;
+                                      const originalContent = button.innerHTML;
+                                      button.innerHTML = `<svg class="h-3 w-3 mr-1 animate-spin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Downloading...`;
+                                      
+                                      try {
+                                        console.log("Attempting to generate signed URL for:", song.songSheetPath);
+                                        const { data, error } = await supabase.storage
+                                          .from('song_sheets')
+                                          .createSignedUrl(song.songSheetPath, 60); // 60 seconds expiry
+                                        
+                                        if (error) {
+                                          console.error("Error creating signed URL:", error);
+                                          throw error;
+                                        }
+                                        
+                                        console.log("Signed URL generated:", data?.signedUrl);
+                                        
+                                        if (data?.signedUrl) {
+                                          window.open(data.signedUrl, '_blank');
+                                        } else {
+                                          console.error("No signed URL returned");
+                                          console.log("Trying direct public URL as fallback");
+                                          // Try direct public URL as fallback
+                                          const publicUrl = `https://ndypjhbdytqcuenohppd.supabase.co/storage/v1/object/public/song_sheets/${song.songSheetPath}`;
+                                          console.log("Using public URL:", publicUrl);
+                                          window.open(publicUrl, '_blank');
+                                        }
+                                      } catch (error) {
+                                        console.error('Error getting download URL:', error);
+                                        toast.error('Failed to download song sheet');
+                                      } finally {
+                                        // Restore button content
+                                        button.innerHTML = originalContent;
+                                      }
+                                    }}
+                                  >
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    Song Sheet
+                                  </Button>
+                                )}
+                                {isLeader && (
+                                  <div className="flex space-x-1 ml-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setEditingSong(song)}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setDeletingSong({
+                                        id: song.id,
+                                        title: song.title
+                                      })}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
-                              <p className="text-sm text-muted-foreground">
-                                by {song.artist}
-                              </p>
                             </div>
-                            {isLeader && (
-                              <div className="flex space-x-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditingSong(song)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeletingSong({
-                                    id: song.id,
-                                    title: song.title
-                                  })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-4">
-                            {song.spotifyLink && (
-                              <a
-                                href={song.spotifyLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-xs bg-secondary py-1 px-2 rounded-full hover:bg-secondary/80"
-                              >
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Spotify
-                              </a>
-                            )}
-                            {song.songSheetPath && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="inline-flex items-center text-xs py-1 px-2 rounded-full hover:bg-secondary/80"
-                                onClick={async (e) => {
-                                  // Set loading state on the button
-                                  const button = e.currentTarget;
-                                  const originalContent = button.innerHTML;
-                                  button.innerHTML = `<svg class="h-3 w-3 mr-1 animate-spin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Downloading...`;
-                                  
-                                  try {
-                                    console.log("Attempting to generate signed URL for:", song.songSheetPath);
-                                    const { data, error } = await supabase.storage
-                                      .from('song_sheets')
-                                      .createSignedUrl(song.songSheetPath, 60); // 60 seconds expiry
-                                    
-                                    if (error) {
-                                      console.error("Error creating signed URL:", error);
-                                      throw error;
-                                    }
-                                    
-                                    console.log("Signed URL generated:", data?.signedUrl);
-                                    
-                                    if (data?.signedUrl) {
-                                      window.open(data.signedUrl, '_blank');
-                                    } else {
-                                      console.error("No signed URL returned");
-                                      console.log("Trying direct public URL as fallback");
-                                      // Try direct public URL as fallback
-                                      const publicUrl = `https://ndypjhbdytqcuenohppd.supabase.co/storage/v1/object/public/song_sheets/${song.songSheetPath}`;
-                                      console.log("Using public URL:", publicUrl);
-                                      window.open(publicUrl, '_blank');
-                                    }
-                                  } catch (error) {
-                                    console.error('Error getting download URL:', error);
-                                    toast.error('Failed to download song sheet');
-                                  } finally {
-                                    // Restore button content
-                                    button.innerHTML = originalContent;
-                                  }
-                                }}
-                              >
-                                <FileText className="h-3 w-3 mr-1" />
-                                Song Sheet
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
                 )}
               </TabsContent>
 
@@ -769,8 +888,49 @@ const BandDetail = () => {
           onSongCreated={fetchSongs}
           editingSong={editingSong}
         />
+
+        {currentEvent && (
+          <SetlistModal
+            event={currentEvent}
+            bandId={bandId || ""}
+            isOpen={isSetlistModalOpen}
+            onClose={() => {
+              setIsSetlistModalOpen(false);
+              setCurrentEvent(null);
+            }}
+            songs={songs}
+            onSetlistUpdated={() => fetchEventsWithSetlists()}
+          />
+        )}
+
+        <ImportSpotifyPlaylistModal
+          isOpen={isImportPlaylistModalOpen}
+          onClose={() => setIsImportPlaylistModalOpen(false)}
+          bandId={bandId || ""}
+          onPlaylistImported={fetchSongs}
+        />
+
+        {/* TEMPORARY: Delete all songs confirmation dialog - Remove this before production */}
+        <AlertDialog open={showDeleteAllConfirm} onOpenChange={setShowDeleteAllConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete ALL songs from your band's library. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteAllSongs}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Yes, delete all songs
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
-      <Footer />
     </div>
   );
 };

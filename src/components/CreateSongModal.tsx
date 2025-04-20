@@ -38,11 +38,16 @@ export function CreateSongModal({
         // Create a unique file name to avoid collisions
         const fileName = `${bandId}/${Date.now()}-${values.songSheet.name.replace(/\s+/g, '-')}`;
         
+        // Determine content type based on file extension
+        const fileExtension = values.songSheet.name.split('.').pop()?.toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '');
+        const contentType = isImage ? `image/${fileExtension}` : 'application/pdf';
+        
         // Upload file to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('song_sheets')
           .upload(fileName, values.songSheet, {
-            contentType: 'application/pdf',
+            contentType,
             upsert: true,
             cacheControl: '3600',
             duplex: 'half',
