@@ -93,7 +93,7 @@ The setlist feature has been implemented using:
 
 - React for the UI components
 - React Beautiful DND for drag-and-drop functionality
-- jsPDF for PDF generation
+- PDF-lib for PDF generation
 - Supabase for database storage
 
 ## Permissions

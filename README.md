@@ -86,7 +86,7 @@ The PDFs are designed to be readable on an iPad for use during performances and 
    - Blank lined section for notes when no song sheet is available
 
 The PDF generation is handled by:
-- jsPDF for creating the PDF document structure
+- PDF-lib for creating the PDF document structure
 - PDF.js for embedding existing song sheets into the new document
 
 This feature is part of the broader setlist management system that allows band leaders to create, edit, and rearrange setlists for upcoming events.
