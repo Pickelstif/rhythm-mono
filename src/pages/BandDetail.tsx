@@ -11,7 +11,6 @@ import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import Footer from '@/components/Footer';
 import { toast } from "sonner";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { AvailabilitySuggestionCard } from "@/components/AvailabilitySuggestionCard";
@@ -380,7 +379,6 @@ const BandDetail = () => {
             <div className="h-64 bg-muted rounded"></div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -396,7 +394,6 @@ const BandDetail = () => {
             <Link to="/dashboard">Back to Dashboard</Link>
           </Button>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -934,7 +931,6 @@ const BandDetail = () => {
           </AlertDialogContent>
         </AlertDialog>
       </main>
-      <Footer />
     </div>
   );
 };
