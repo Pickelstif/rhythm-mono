@@ -568,106 +568,108 @@ const BandDetail = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid gap-4">
-                    {songs.map((song) => (
-                      <Card key={song.id}>
-                        <CardContent className="pt-6">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-1">
+                  <Card>
+                    <CardContent className="p-0">
+                      <ul className="divide-y">
+                        {songs.map((song) => (
+                          <li key={song.id} className="p-4 hover:bg-muted/50">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <div>
+                                  <h4 className="font-medium">{song.title}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {song.artist}
+                                  </p>
+                                </div>
+                              </div>
                               <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-medium">{song.title}</h4>
+                                {song.spotifyLink && (
+                                  <a
+                                    href={song.spotifyLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center text-xs bg-secondary py-1 px-2 rounded-full hover:bg-secondary/80"
+                                  >
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    Spotify
+                                  </a>
+                                )}
+                                {song.songSheetPath && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="inline-flex items-center text-xs py-1 px-2 rounded-full hover:bg-secondary/80"
+                                    onClick={async (e) => {
+                                      // Set loading state on the button
+                                      const button = e.currentTarget;
+                                      const originalContent = button.innerHTML;
+                                      button.innerHTML = `<svg class="h-3 w-3 mr-1 animate-spin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Downloading...`;
+                                      
+                                      try {
+                                        console.log("Attempting to generate signed URL for:", song.songSheetPath);
+                                        const { data, error } = await supabase.storage
+                                          .from('song_sheets')
+                                          .createSignedUrl(song.songSheetPath, 60); // 60 seconds expiry
+                                        
+                                        if (error) {
+                                          console.error("Error creating signed URL:", error);
+                                          throw error;
+                                        }
+                                        
+                                        console.log("Signed URL generated:", data?.signedUrl);
+                                        
+                                        if (data?.signedUrl) {
+                                          window.open(data.signedUrl, '_blank');
+                                        } else {
+                                          console.error("No signed URL returned");
+                                          console.log("Trying direct public URL as fallback");
+                                          // Try direct public URL as fallback
+                                          const publicUrl = `https://ndypjhbdytqcuenohppd.supabase.co/storage/v1/object/public/song_sheets/${song.songSheetPath}`;
+                                          console.log("Using public URL:", publicUrl);
+                                          window.open(publicUrl, '_blank');
+                                        }
+                                      } catch (error) {
+                                        console.error('Error getting download URL:', error);
+                                        toast.error('Failed to download song sheet');
+                                      } finally {
+                                        // Restore button content
+                                        button.innerHTML = originalContent;
+                                      }
+                                    }}
+                                  >
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    Song Sheet
+                                  </Button>
+                                )}
+                                {isLeader && (
+                                  <div className="flex space-x-1 ml-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setEditingSong(song)}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setDeletingSong({
+                                        id: song.id,
+                                        title: song.title
+                                      })}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
-                              <p className="text-sm text-muted-foreground">
-                                by {song.artist}
-                              </p>
                             </div>
-                            {isLeader && (
-                              <div className="flex space-x-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditingSong(song)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeletingSong({
-                                    id: song.id,
-                                    title: song.title
-                                  })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-4">
-                            {song.spotifyLink && (
-                              <a
-                                href={song.spotifyLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-xs bg-secondary py-1 px-2 rounded-full hover:bg-secondary/80"
-                              >
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Spotify
-                              </a>
-                            )}
-                            {song.songSheetPath && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="inline-flex items-center text-xs py-1 px-2 rounded-full hover:bg-secondary/80"
-                                onClick={async (e) => {
-                                  // Set loading state on the button
-                                  const button = e.currentTarget;
-                                  const originalContent = button.innerHTML;
-                                  button.innerHTML = `<svg class="h-3 w-3 mr-1 animate-spin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Downloading...`;
-                                  
-                                  try {
-                                    console.log("Attempting to generate signed URL for:", song.songSheetPath);
-                                    const { data, error } = await supabase.storage
-                                      .from('song_sheets')
-                                      .createSignedUrl(song.songSheetPath, 60); // 60 seconds expiry
-                                    
-                                    if (error) {
-                                      console.error("Error creating signed URL:", error);
-                                      throw error;
-                                    }
-                                    
-                                    console.log("Signed URL generated:", data?.signedUrl);
-                                    
-                                    if (data?.signedUrl) {
-                                      window.open(data.signedUrl, '_blank');
-                                    } else {
-                                      console.error("No signed URL returned");
-                                      console.log("Trying direct public URL as fallback");
-                                      // Try direct public URL as fallback
-                                      const publicUrl = `https://ndypjhbdytqcuenohppd.supabase.co/storage/v1/object/public/song_sheets/${song.songSheetPath}`;
-                                      console.log("Using public URL:", publicUrl);
-                                      window.open(publicUrl, '_blank');
-                                    }
-                                  } catch (error) {
-                                    console.error('Error getting download URL:', error);
-                                    toast.error('Failed to download song sheet');
-                                  } finally {
-                                    // Restore button content
-                                    button.innerHTML = originalContent;
-                                  }
-                                }}
-                              >
-                                <FileText className="h-3 w-3 mr-1" />
-                                Song Sheet
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
                 )}
               </TabsContent>
 
