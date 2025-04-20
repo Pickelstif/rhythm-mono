@@ -35,6 +35,7 @@ export type Event = {
   attendees: string[]; // array of user IDs
   createdBy: string; // user ID
   createdAt: Date;
+  setlist?: Setlist;
 };
 
 export type Song = {
@@ -75,3 +76,22 @@ export interface UserProfile {
   notificationPreferences: NotificationPreferences;
   createdAt: string;
 }
+
+export type Setlist = {
+  id: string;
+  eventId: string;
+  songs: SetlistSong[];
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type SetlistSong = {
+  id: string;
+  setlistId: string;
+  songId: string;
+  position: number;
+  notes?: string;
+  song?: Song;
+  createdAt: Date;
+};

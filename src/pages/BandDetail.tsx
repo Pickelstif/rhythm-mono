@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Band, Event, BandMember, Song } from "@/types";
+import { Band, Event, BandMember, Song, Setlist } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil, Music, ExternalLink, FileText, Loader2 } from "lucide-react";
+import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil, Music, ExternalLink, FileText, Loader2, List, Download } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
@@ -26,6 +26,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CreateSongModal } from "@/components/CreateSongModal";
+import { SetlistModal } from "@/components/SetlistModal";
+import { Database } from "@/integrations/supabase/types";
+
+// Type definitions for Supabase query results
+type SetlistRow = Database['public']['Tables']['setlists']['Row'];
 
 const BandDetail = () => {
   const { bandId } = useParams<{ bandId: string }>();
@@ -45,6 +50,11 @@ const BandDetail = () => {
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [deletingSong, setDeletingSong] = useState<{id: string, title: string} | null>(null);
   const [songsheetUploading, setSongsheetUploading] = useState(false);
+
+  // State for setlist management
+  const [isSetlistModalOpen, setIsSetlistModalOpen] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
+  const [eventsWithSetlists, setEventsWithSetlists] = useState<Map<string, boolean>>(new Map());
 
   const fetchBand = async () => {
     if (!bandId || !user) return;
@@ -210,6 +220,42 @@ const BandDetail = () => {
     }
   };
 
+  const fetchEventsWithSetlists = async () => {
+    if (!bandId || !band) return;
+    
+    try {
+      // Get all events for this band
+      const eventIds = band.events.map(event => event.id);
+      
+      if (eventIds.length === 0) return;
+      
+      // Check which events have setlists
+      const { data: setlists, error } = await supabase
+        .from("setlists")
+        .select("event_id")
+        .in("event_id", eventIds);
+
+      if (error) throw error;
+      
+      // Create a map of event IDs to boolean (has setlist)
+      const setlistMap = new Map<string, boolean>();
+      band.events.forEach(event => {
+        setlistMap.set(event.id, false);
+      });
+      
+      if (setlists) {
+        // Explicitly type the result
+        (setlists as Pick<SetlistRow, 'event_id'>[]).forEach(setlist => {
+          setlistMap.set(setlist.event_id, true);
+        });
+      }
+      
+      setEventsWithSetlists(setlistMap);
+    } catch (error) {
+      console.error("Error fetching setlists:", error);
+    }
+  };
+
   useEffect(() => {
     fetchBand();
   }, [bandId, user]);
@@ -217,6 +263,7 @@ const BandDetail = () => {
   useEffect(() => {
     if (band) {
       fetchMemberAvailability();
+      fetchEventsWithSetlists();
     }
   }, [band]);
 
@@ -288,6 +335,11 @@ const BandDetail = () => {
     setSelectedDate(date);
     setEditingEvent(null);
     setIsCreateEventModalOpen(true);
+  };
+
+  const handleManageSetlist = (event: Event) => {
+    setCurrentEvent(event);
+    setIsSetlistModalOpen(true);
   };
 
   if (loading) {
@@ -489,24 +541,47 @@ const BandDetail = () => {
                                     <span>{format(event.startTime, "h:mm a")}</span>
                                   </CardDescription>
                                 </div>
-                                {isLeader && (
-                                  <div className="flex space-x-1">
+                                <div className="flex space-x-1">
+                                  {eventsWithSetlists.get(event.id) ? (
                                     <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleEditEvent(event)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex items-center gap-1"
+                                      onClick={() => handleManageSetlist(event)}
                                     >
-                                      <Pencil className="h-4 w-4" />
+                                      <List className="h-4 w-4" />
+                                      Edit Setlist
                                     </Button>
+                                  ) : (
                                     <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => confirmDeleteEvent(event)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex items-center gap-1"
+                                      onClick={() => handleManageSetlist(event)}
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      <Plus className="h-4 w-4" />
+                                      Add Setlist
                                     </Button>
-                                  </div>
-                                )}
+                                  )}
+                                  {isLeader && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleEditEvent(event)}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => confirmDeleteEvent(event)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </CardHeader>
                             <CardContent>
@@ -771,6 +846,20 @@ const BandDetail = () => {
           onSongCreated={fetchSongs}
           editingSong={editingSong}
         />
+
+        {currentEvent && (
+          <SetlistModal
+            event={currentEvent}
+            bandId={bandId || ""}
+            isOpen={isSetlistModalOpen}
+            onClose={() => {
+              setIsSetlistModalOpen(false);
+              setCurrentEvent(null);
+            }}
+            songs={songs}
+            onSetlistUpdated={() => fetchEventsWithSetlists()}
+          />
+        )}
       </main>
       <Footer />
     </div>

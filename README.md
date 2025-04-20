@@ -60,6 +60,37 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## PDF Setlist Generator
+
+The application includes a PDF generator for creating detailed setlist documents that can be easily shared and printed. This feature:
+
+- Creates professional setlist PDFs for gigs and rehearsals
+- Includes a setlist overview page with all songs and notes
+- Generates individual pages for each song with details
+- Automatically embeds song sheets from Supabase Storage when available
+- Provides fallback options when embedded content cannot be loaded
+- Supports downloading the finished PDF for offline use
+
+The PDFs are designed to be readable on an iPad for use during performances and include:
+
+1. A cover page with:
+   - Event title and type (rehearsal/gig)
+   - Date and time
+   - Location (if available)
+   - Complete setlist summary
+
+2. Individual pages for each song featuring:
+   - Song title and artist
+   - Performance notes (if added)
+   - Embedded song sheet (if available) 
+   - Blank lined section for notes when no song sheet is available
+
+The PDF generation is handled by:
+- jsPDF for creating the PDF document structure
+- PDF.js for embedding existing song sheets into the new document
+
+This feature is part of the broader setlist management system that allows band leaders to create, edit, and rearrange setlists for upcoming events.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/cac5525e-96f2-403b-b62e-314bc2c3f0b1) and click on Share -> Publish.
