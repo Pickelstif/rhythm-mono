@@ -274,8 +274,12 @@ export function SetlistModal({
       onSetlistUpdated();
       onClose();
     } catch (error) {
-      console.error("Error saving setlist:", error);
-      toast.error("Failed to save setlist");
+      // Check if error is a PostgreSQL RLS policy violation
+      if (error instanceof Object && (error as any).code === '42501') {
+        toast.error("Only leaders can edit the setlist");
+      } else {
+        toast.error("Failed to save setlist");
+      }
     } finally {
       setLoading(false);
     }
