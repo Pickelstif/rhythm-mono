@@ -364,6 +364,51 @@ export type Database = {
           }
         ]
       }
+      transactions: {
+        Row: {
+          id: string
+          band_id: string
+          amount: number
+          description: string
+          transaction_date: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          band_id: string
+          amount: number
+          description: string
+          transaction_date?: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          band_id?: string
+          amount?: number
+          description?: string
+          transaction_date?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_band_id_fkey"
+            columns: ["band_id"]
+            isOneToOne: false
+            referencedRelation: "bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
