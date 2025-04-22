@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Band, Event, BandMember, Song, Setlist } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,6 +61,8 @@ const BandDetail = () => {
 
   // TEMPORARY: State for delete all songs confirmation
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchBand = async () => {
     if (!bandId || !user) return;
@@ -457,6 +459,21 @@ const BandDetail = () => {
                     </div>
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/dashboard')}
+                >
+                  Back to Dashboard
+                </Button>
+                <Link to={`/band/${bandId}/finances`}>
+                  <Button variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Finances
+                  </Button>
+                </Link>
               </div>
             </div>
 
