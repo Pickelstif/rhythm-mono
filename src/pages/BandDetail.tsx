@@ -441,8 +441,8 @@ const BandDetail = () => {
                 {isLeader && (
                   <div className="space-y-2 pt-2">
                     <h3 className="font-medium text-sm text-muted-foreground">Invite Members</h3>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 p-2 bg-muted rounded-md text-sm font-mono truncate">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                      <div className="w-full sm:flex-1 p-2 bg-muted rounded-md text-sm font-mono break-all">
                         {`${window.location.origin}/join-band/${band.id}`}
                       </div>
                       <Button
