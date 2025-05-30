@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CreateEventForm } from "./CreateEventForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -91,6 +91,12 @@ export function CreateEventModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{editingEvent ? "Edit Event" : "Create New Event"}</DialogTitle>
+          <DialogDescription>
+            {editingEvent 
+              ? "Update the details for this event." 
+              : "Fill in the details to create a new event for your band."
+            }
+          </DialogDescription>
         </DialogHeader>
         <CreateEventForm 
           bandId={bandId} 
