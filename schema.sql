@@ -68,6 +68,19 @@ CREATE TABLE public.notifications (
     CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 
+-- Transactions table for income/expense tracking
+CREATE TABLE public.transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    band_id UUID NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    description TEXT NOT NULL,
+    transaction_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT transactions_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id),
+    CONSTRAINT transactions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bands ENABLE ROW LEVEL SECURITY;
@@ -203,4 +216,34 @@ USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can manage their own notifications"
 ON public.notifications FOR ALL
-USING (auth.uid() = user_id); 
+USING (auth.uid() = user_id);
+
+-- Enable RLS for transactions table
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+-- Create index for better query performance
+CREATE INDEX idx_transactions_band_id ON public.transactions(band_id);
+CREATE INDEX idx_transactions_created_by ON public.transactions(created_by);
+CREATE INDEX idx_transactions_date ON public.transactions(transaction_date);
+
+-- Transactions policies
+CREATE POLICY "Band members can view transactions"
+ON public.transactions FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1 FROM public.band_members
+        WHERE band_id = transactions.band_id
+        AND user_id = auth.uid()
+    )
+);
+
+CREATE POLICY "Band leaders can manage transactions"
+ON public.transactions FOR ALL
+USING (
+    EXISTS (
+        SELECT 1 FROM public.band_members
+        WHERE band_id = transactions.band_id
+        AND user_id = auth.uid()
+        AND role = 'leader'
+    )
+); 

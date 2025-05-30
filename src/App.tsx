@@ -14,6 +14,7 @@ import Landing from "./pages/Landing";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
 import JoinBand from "./pages/JoinBand";
+import IncomeExpenseTracker from "./pages/IncomeExpenseTracker";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,11 @@ const App = () => (
               <Route path="/join-band/:bandId" element={
                 <ProtectedRoute>
                   <PageLayout><JoinBand /></PageLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/band/:bandId/finances" element={
+                <ProtectedRoute>
+                  <PageLayout><IncomeExpenseTracker /></PageLayout>
                 </ProtectedRoute>
               } />
               <Route path="*" element={<PageLayout><NotFound /></PageLayout>} />

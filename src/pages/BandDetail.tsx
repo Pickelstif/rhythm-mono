@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Band, Event, BandMember, Song, Setlist } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,6 +28,7 @@ import { CreateSongModal } from "@/components/CreateSongModal";
 import { SetlistModal } from "@/components/SetlistModal";
 import { Database } from "@/integrations/supabase/types";
 import { ImportSpotifyPlaylistModal } from "@/components/ImportSpotifyPlaylistModal";
+import { Switch } from "@/components/ui/switch";
 
 // Type definitions for Supabase query results
 type SetlistRow = Database['public']['Tables']['setlists']['Row'];
@@ -60,6 +61,8 @@ const BandDetail = () => {
 
   // TEMPORARY: State for delete all songs confirmation
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchBand = async () => {
     if (!bandId || !user) return;
@@ -369,6 +372,34 @@ const BandDetail = () => {
     }
   };
 
+  const handleRoleToggle = async (memberId: string, currentRole: "leader" | "member") => {
+    if (!bandId || !user) return;
+    
+    try {
+      // Don't allow changing your own role
+      if (memberId === user.id) {
+        toast.error("You cannot change your own role");
+        return;
+      }
+
+      const newRole = currentRole === "leader" ? "member" : "leader";
+      
+      const { error } = await supabase
+        .from("band_members")
+        .update({ role: newRole })
+        .eq("band_id", bandId)
+        .eq("user_id", memberId);
+
+      if (error) throw error;
+
+      toast.success(`Role updated successfully`);
+      fetchBand(); // Refresh the band data
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast.error("Failed to update role");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -421,6 +452,21 @@ const BandDetail = () => {
                     </Button>
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/dashboard')}
+                >
+                  Back to Dashboard
+                </Button>
+                <Link to={`/band/${bandId}/finances`}>
+                  <Button variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Finances
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -835,10 +881,22 @@ const BandDetail = () => {
                               {member.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
+                          <div className="flex-1">
                             <p className="text-sm font-medium">{member.name}</p>
                             <p className="text-xs text-muted-foreground capitalize">{member.role}</p>
                           </div>
+                          {isLeader && member.userId !== user?.id && (
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                checked={member.role === "leader"}
+                                onCheckedChange={() => handleRoleToggle(member.userId, member.role)}
+                                aria-label="Toggle leader role"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                Leader
+                              </span>
+                            </div>
+                          )}
                         </div>
                         {member.instruments && member.instruments.length > 0 && (
                           <div className="mt-4">

@@ -13,7 +13,9 @@ import {
   CalendarCheck,
   ListMusic,
   Bell,
-  Zap
+  Zap,
+  DollarSign,
+  PiggyBank
 } from 'lucide-react';
 import logoLight from '@/assets/logo_light.png';
 import logoDark from '@/assets/logo_dark.png';
@@ -84,6 +86,42 @@ const FeatureHighlight = ({
                 <div className="w-3 h-3 rounded-full bg-rhythm-200 dark:bg-rhythm-800" />
                 <span>Partial Availability</span>
               </div>
+            </div>
+          </div>
+        ) : title.includes('Financial') ? (
+          <div className="bg-card rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-semibold text-xl">Band Finances</h3>
+              <div className="text-green-600 font-bold text-xl">$1,250.00</div>
+            </div>
+            <div className="space-y-3 mb-6">
+              {[
+                { type: "income", description: "Gig at Riverside Bar", amount: "$500.00", date: "Nov 12" },
+                { type: "expense", description: "New microphone", amount: "-$150.00", date: "Nov 8" },
+                { type: "income", description: "Private event booking", amount: "$1000.00", date: "Nov 1" },
+                { type: "expense", description: "Studio time", amount: "-$100.00", date: "Oct 28" },
+              ].map((transaction, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${transaction.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {transaction.type === 'income' ? <ArrowRight className="h-4 w-4 rotate-45" /> : <ArrowRight className="h-4 w-4 rotate-[225deg]" />}
+                    </div>
+                    <div>
+                      <div className="font-medium">{transaction.description}</div>
+                      <div className="text-sm text-muted-foreground">{transaction.date}</div>
+                    </div>
+                  </div>
+                  <div className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                    {transaction.amount}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-center">
+              <Button size="sm" variant="outline">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Add Transaction
+              </Button>
             </div>
           </div>
         ) : (
@@ -199,6 +237,11 @@ const Landing = () => {
             description="Manage your band's repertoire, track song progress, and create perfect setlists for every gig. Keep everyone on the same page."
             isReversed
           />
+          <FeatureHighlight
+            icon={<DollarSign className="h-6 w-6" />}
+            title="Financial Management"
+            description="Track all your band's income and expenses in one place. See your current balance, record transactions, and keep your finances organized."
+          />
         </section>
 
         {/* Additional Features Grid */}
@@ -219,6 +262,11 @@ const Landing = () => {
               icon={<Zap className="h-5 w-5" />}
               title="Quick Setup"
               description="Import your existing calendars and get started in minutes."
+            />
+            <Feature
+              icon={<PiggyBank className="h-5 w-5" />}
+              title="Financial Tracking"
+              description="Keep track of your band's income and expenses with our simple financial management tools."
             />
           </div>
         </section>
