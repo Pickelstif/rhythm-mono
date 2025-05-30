@@ -1,4 +1,4 @@
-import { Band, User } from "@/types";
+import { Band, User, Event } from "@/types";
 
 // Mock current user
 export const currentUser: User = {
@@ -144,6 +144,43 @@ export const mockBands: Band[] = [
   }
 ];
 
+// Mock events
+export const mockEvents: Event[] = [
+  {
+    id: "event-1",
+    bandId: "band-1",
+    title: "Summer Festival Performance",
+    location: "Central Park Amphitheater",
+    startTime: new Date(2024, 6, 15, 19, 0),
+    eventType: "performance",
+    attendees: ["user-1", "user-2", "user-3"],
+    createdBy: "user-1",
+    createdAt: new Date(2024, 5, 1),
+  },
+  {
+    id: "event-2",
+    bandId: "band-1",
+    title: "Weekly Practice Session",
+    location: "Studio B - Music Center",
+    startTime: new Date(2024, 6, 8, 18, 0),
+    eventType: "rehearsal",
+    attendees: ["user-1", "user-2"],
+    createdBy: "user-1",
+    createdAt: new Date(2024, 5, 20),
+  },
+  {
+    id: "event-3",
+    bandId: "band-2",
+    title: "Jazz Night at Blue Note",
+    location: "Blue Note Jazz Club",
+    startTime: new Date(2024, 6, 22, 20, 30),
+    eventType: "performance",
+    attendees: ["user-4", "user-5", "user-6"],
+    createdBy: "user-4",
+    createdAt: new Date(2024, 5, 15),
+  },
+];
+
 // Mock data service functions
 export const getBands = async (): Promise<Band[]> => {
   return new Promise((resolve) => {
@@ -261,3 +298,16 @@ export const createEvent = async (
     }, 500);
   });
 };
+
+// Fix the createMockEvent function
+export const createMockEvent = (data: Partial<Event>): Event => ({
+  id: data.id || `event-${Date.now()}`,
+  bandId: data.bandId || "band-1",
+  title: data.title || "New Event",
+  location: data.location || "TBD",
+  startTime: data.startTime || new Date(),
+  eventType: data.eventType || "rehearsal",
+  attendees: data.attendees || [],
+  createdBy: data.createdBy || "user-1",
+  createdAt: data.createdAt || new Date(),
+});
