@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Band } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -79,8 +80,9 @@ const Dashboard = () => {
             id: event.id,
             bandId: event.band_id,
             title: event.title,
-            location: event.location,
-            startTime: new Date(event.start_time),
+            location: event.location || '',
+            startTime: new Date(`${event.date}T${event.start_time}`),
+            eventType: event.event_type as 'rehearsal' | 'gig',
             attendees: [],
             createdBy: event.created_by,
             createdAt: new Date(event.created_at),
@@ -99,6 +101,7 @@ const Dashboard = () => {
       setBands(bandsWithMembers);
     } catch (error) {
       console.error("Error fetching bands:", error);
+      toast.error("Failed to load bands");
     } finally {
       setLoading(false);
     }
