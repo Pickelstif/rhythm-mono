@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay } from "date-fns";
 import { cn } from '@/lib/utils';
@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { AvailabilityTooltip } from "./AvailabilityTooltip";
 
 type AvailabilityCalendarProps = {
   bandId: string;
@@ -33,6 +34,14 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
   const [saving, setSaving] = useState(false);
   const [bandAvailability, setBandAvailability] = useState<Record<string, { name: string; dates: Date[]; color: string }>>({});
   const [isLeader, setIsLeader] = useState(false);
+  
+  // Tooltip state
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [tooltipDate, setTooltipDate] = useState<Date | null>(null);
+  
+  // Double tap state
+  const lastTapTimeRef = useRef<number>(0);
+  const lastTapDateRef = useRef<Date | null>(null);
 
   // Fetch existing availability for the band
   useEffect(() => {
@@ -116,16 +125,63 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
   }, [bandId, user]);
 
   const handleDateClick = (date: Date) => {
-    setSelectedDates(prev => {
-      const isSelected = prev.some(d => isSameDay(d, date));
-      if (isSelected) {
-        // Remove the date if it's already selected
-        return prev.filter(d => !isSameDay(d, date));
+    const now = Date.now();
+    const timeDiff = now - lastTapTimeRef.current;
+    const isSameDate = lastTapDateRef.current && isSameDay(lastTapDateRef.current, date);
+    
+    // Double tap detected if same date is tapped within 200ms
+    if (isSameDate && timeDiff < 200) {
+      // Double tap - show tooltip
+      setTooltipDate(date);
+      setTooltipOpen(true);
+      
+      // Reset tap tracking
+      lastTapTimeRef.current = 0;
+      lastTapDateRef.current = null;
+    } else {
+      // First tap or different date - record it and schedule single click action
+      lastTapTimeRef.current = now;
+      lastTapDateRef.current = date;
+      
+      // Schedule single click action after double tap window
+      setTimeout(() => {
+        // Only execute if this is still the latest tap (no double tap occurred)
+        if (lastTapTimeRef.current === now) {
+          setSelectedDates(prev => {
+            const isSelected = prev.some(d => isSameDay(d, date));
+            if (isSelected) {
+              // Remove the date if it's already selected
+              return prev.filter(d => !isSameDay(d, date));
+            } else {
+              // Add the date if it's not selected
+              return [...prev, date];
+            }
+          });
+          
+          // Clear tracking
+          lastTapTimeRef.current = 0;
+          lastTapDateRef.current = null;
+        }
+      }, 200);
+    }
+  };
+
+  const getAvailabilityForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const available: Array<{ name: string; color: string }> = [];
+    const unavailable: Array<{ name: string; color: string }> = [];
+
+    Object.entries(bandAvailability).forEach(([memberId, memberData]) => {
+      const isAvailable = memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr);
+      
+      if (isAvailable) {
+        available.push({ name: memberData.name, color: memberData.color });
       } else {
-        // Add the date if it's not selected
-        return [...prev, date];
+        unavailable.push({ name: memberData.name, color: memberData.color });
       }
     });
+
+    return { available, unavailable };
   };
 
   const handleSave = async () => {
@@ -188,73 +244,57 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
     }
   };
 
-  const getDayClass = (day: Date) => {
-    if (!bandAvailability) return '';
-    
-    const dateStr = format(day, 'yyyy-MM-dd');
-    const availableMembers = Object.entries(bandAvailability)
-      .filter(([_, memberData]) => 
-        memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
-      );
-    
-    if (availableMembers.length === 0) return '';
-    
-    if (availableMembers.length === Object.keys(bandAvailability).length) {
-      return 'ring-2 ring-amber-400 text-amber-400 hover:ring-amber-500 hover:text-amber-500'; // All members available
-    }
-    
-    return ''; // Some members available - no background color
-  };
-  
   const renderDay = (day: Date) => {
-    const dayClass = getDayClass(day);
     const isSelected = selectedDates.some(d => isSameDay(d, day));
+    const { available, unavailable } = getAvailabilityForDate(day);
+    const totalMembers = available.length + unavailable.length;
+    const availableCount = available.length;
     
-    const dateStr = format(day, 'yyyy-MM-dd');
-    const availableMembers = Object.entries(bandAvailability)
-      .filter(([memberId, memberData]) => 
-        memberId !== user?.id && memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
-      );
+    // Show count only if at least one member is available
+    const showCount = availableCount > 0 && totalMembers > 0;
     
-    // Count all members including current user for all-members-available check
-    const allMembersCount = Object.keys(bandAvailability).length;
-    const allMembersAvailable = availableMembers.length === allMembersCount - 1 && // All other members
-                               selectedDates.some(d => format(d, 'yyyy-MM-dd') === dateStr); // Plus current user
+    // All members available styling
+    const allMembersAvailable = availableCount === totalMembers && totalMembers > 0;
     
     return (
-      <div 
-        className={cn(
-          "h-7 w-7 p-0 font-normal aria-selected:opacity-100 cursor-pointer rounded-full transition-colors duration-200",
-          dayClass,
-          isSelected ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" : "hover:bg-muted/50",
-          "flex flex-col items-center justify-center relative"
-        )}
-        onClick={() => handleDateClick(day)}
+      <AvailabilityTooltip
+        date={day}
+        availableMembers={available}
+        unavailableMembers={unavailable}
+        open={tooltipOpen && tooltipDate && isSameDay(tooltipDate, day)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTooltipOpen(false);
+            setTooltipDate(null);
+          }
+        }}
       >
-        <span className={cn(
-          "text-sm font-medium",
-          allMembersAvailable && !isSelected && "text-amber-400"
-        )}>{day.getDate()}</span>
-        {bandAvailability && availableMembers.length > 0 && (
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-0.5 translate-y-1.5">
-            {Object.entries(bandAvailability)
-              .filter(([memberId, memberData]) => 
-                memberId !== user?.id && memberData.dates.some(d => format(d, 'yyyy-MM-dd') === dateStr)
-              )
-              .map(([memberId, memberData], index) => (
-                <div 
-                  key={index}
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    memberData.color
-                  )}
-                  title={memberData.name}
-                />
-              ))
-            }
-          </div>
-        )}
-      </div>
+        <div 
+          className={cn(
+            "h-8 w-8 p-0 font-normal cursor-pointer rounded-full transition-colors duration-200 relative",
+            "flex flex-col items-center justify-center",
+            isSelected 
+              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+              : "hover:bg-muted/50",
+            allMembersAvailable && "ring-2 ring-amber-400"
+          )}
+          onClick={() => handleDateClick(day)}
+        >
+          <span className={cn(
+            "font-medium leading-none",
+            showCount ? "text-xs -mt-0.5" : "text-sm",
+            allMembersAvailable && !isSelected && "text-amber-600"
+          )}>
+            {day.getDate()}
+          </span>
+          
+          {showCount && (
+            <span className="text-[10px] leading-none font-medium text-muted-foreground">
+              {availableCount}/{totalMembers}
+            </span>
+          )}
+        </div>
+      </AvailabilityTooltip>
     );
   };
 
@@ -268,9 +308,6 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
 
   return (
     <div className="space-y-6 p-6 bg-card rounded-lg border shadow-sm">
-      <div className="text-sm text-muted-foreground text-center">
-        Click on dates to select/deselect your availability
-      </div>
       <div className="flex justify-center">
         <Calendar
           mode="multiple"
@@ -290,33 +327,6 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
       </div>
       
       <div className="flex flex-col gap-4">
-        <div className="space-y-3">
-          <h3 className="font-medium text-sm text-muted-foreground">Member Availability</h3>
-          <div className="flex flex-wrap gap-4">
-            {Object.entries(bandAvailability)
-              .filter(([memberId]) => memberId !== user?.id)
-              .map(([memberId, memberData]) => (
-              <div 
-                key={memberId}
-                className="flex items-center space-x-2"
-              >
-                <div className={cn(
-                  "h-4 w-4 rounded-full",
-                  memberData.color
-                )} />
-                <span className="text-sm font-medium">{memberData.name}</span>
-              </div>
-            ))}
-            <div className="flex items-center space-x-2">
-              <div className="h-4 w-4 rounded-full bg-primary" />
-              <span className="text-sm font-medium">You (selected dates)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="h-4 w-4 rounded-full text-amber-400 ring-2 ring-amber-400" />
-              <span className="text-sm font-medium">All members available</span>
-            </div>
-          </div>
-        </div>
         <Button 
           onClick={handleSave} 
           disabled={saving}

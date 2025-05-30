@@ -439,24 +439,17 @@ const BandDetail = () => {
               <div className="space-y-2">
                 <h1 className="text-4xl font-bold">{band.name}</h1>
                 {isLeader && (
-                  <div className="space-y-2 pt-2">
-                    <h3 className="font-medium text-sm text-muted-foreground">Invite Members</h3>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                      <div className="w-full sm:flex-1 p-2 bg-muted rounded-md text-sm font-mono break-all">
-                        {`${window.location.origin}/join-band/${band.id}`}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${window.location.origin}/join-band/${band.id}`);
-                          toast.success("Invite link copied to clipboard");
-                        }}
-                        className="shrink-0"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/join-band/${band.id}`);
+                        toast.success("Invite link copied to clipboard");
+                      }}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Invite Link
+                    </Button>
                   </div>
                 )}
               </div>
@@ -477,15 +470,79 @@ const BandDetail = () => {
               </div>
             </div>
 
-            <Tabs defaultValue="events" className="space-y-6">
+            <Tabs defaultValue="availability" className="space-y-6">
               <TabsList>
-                <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="availability">Availability</TabsTrigger>
+                <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="songs">Songs</TabsTrigger>
                 <TabsTrigger value="members">Members</TabsTrigger>
               </TabsList>
 
+              <TabsContent value="availability">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Band Availability</CardTitle>
+                    <CardDescription>
+                      See when band members are available for rehearsals and performances.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Legend */}
+                    <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                      <h4 className="text-sm font-medium">How to use:</h4>
+                      <div className="grid gap-2 text-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-card border-2 border-amber-500 rounded-full flex items-center justify-center text-xs font-medium">
+                            15
+                          </div>
+                          <span className="text-muted-foreground">
+                            Orange ring = All members available
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-card border rounded-full flex items-center justify-center text-[10px] font-medium">
+                            3/4
+                          </div>
+                          <span className="text-muted-foreground">
+                            Numbers show available/total members
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+                            25
+                          </div>
+                          <span className="text-muted-foreground">
+                            Your selected dates appear highlighted
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">👆</span>
+                          <span className="text-muted-foreground">
+                            Double-tap any date to see which members are available
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <AvailabilityCalendar 
+                      bandId={band.id} 
+                      onAvailabilityChange={fetchMemberAvailability}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="events" className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Events</h3>
+                  {isLeader && (
+                    <Button onClick={() => setIsCreateEventModalOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Event
+                    </Button>
+                  )}
+                </div>
+                
                 {band.events.length === 0 ? (
                   <div className="space-y-6">
                     <Card>
@@ -544,59 +601,8 @@ const BandDetail = () => {
                   </div>
                 ) : (
                   <div className="grid gap-6">
-                    {isLeader && bandAvailability.get(band.id)?.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Available Dates</h3>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                          {bandAvailability.get(band.id)?.map((date) => (
-                            <AvailabilitySuggestionCard
-                              key={date.toISOString()}
-                              date={date}
-                              onScheduleEvent={handleScheduleFromSuggestion}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {!isLeader && bandAvailability.get(band.id)?.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Available Dates</h3>
-                        <p className="text-muted-foreground">
-                          The following dates would be great for scheduling rehearsals or gigs, as all band members are available:
-                        </p>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                          {bandAvailability.get(band.id)?.map((date) => (
-                            <Card key={date.toISOString()}>
-                              <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="font-medium">
-                                      {format(date, "MMMM d, yyyy")}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      All members available
-                                    </p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Consider suggesting these dates to your band leader for scheduling events.
-                        </p>
-                      </div>
-                    )}
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-semibold">Scheduled Events</h3>
-                        {isLeader && (
-                          <Button onClick={() => setIsCreateEventModalOpen(true)}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Create Event
-                          </Button>
-                        )}
-                      </div>
+                      <h3 className="text-lg font-semibold">Scheduled Events</h3>
                       <div className="grid gap-6">
                         {sortEventsByDate(band.events).map((event) => (
                           <Card key={event.id}>
@@ -667,25 +673,52 @@ const BandDetail = () => {
                         ))}
                       </div>
                     </div>
+                    
+                    {isLeader && bandAvailability.get(band.id)?.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Available Dates</h3>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {bandAvailability.get(band.id)?.map((date) => (
+                            <AvailabilitySuggestionCard
+                              key={date.toISOString()}
+                              date={date}
+                              onScheduleEvent={handleScheduleFromSuggestion}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {!isLeader && bandAvailability.get(band.id)?.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Available Dates</h3>
+                        <p className="text-muted-foreground">
+                          The following dates would be great for scheduling rehearsals or gigs, as all band members are available:
+                        </p>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {bandAvailability.get(band.id)?.map((date) => (
+                            <Card key={date.toISOString()}>
+                              <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium">
+                                      {format(date, "MMMM d, yyyy")}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      All members available
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Consider suggesting these dates to your band leader for scheduling events.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
-              </TabsContent>
-
-              <TabsContent value="availability">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Band Availability</CardTitle>
-                    <CardDescription>
-                      See when band members are available for rehearsals and performances.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AvailabilityCalendar 
-                      bandId={band.id} 
-                      onAvailabilityChange={fetchMemberAvailability}
-                    />
-                  </CardContent>
-                </Card>
               </TabsContent>
 
               <TabsContent value="songs" className="space-y-6">
