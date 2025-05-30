@@ -1,4 +1,3 @@
-
 import { UserProfile } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -17,30 +16,6 @@ const parseNotificationPreferences = (prefString: string) => {
 
 const stringifyNotificationPreferences = (prefs: any) => {
   return JSON.stringify(prefs);
-};
-
-// Input validation helper
-const validateProfileInput = (profile: UserProfile) => {
-  if (!profile.fullName || profile.fullName.trim().length === 0) {
-    throw new Error('Full name is required');
-  }
-  
-  if (profile.fullName.length > 100) {
-    throw new Error('Full name must be less than 100 characters');
-  }
-  
-  if (profile.instruments && profile.instruments.length > 20) {
-    throw new Error('Too many instruments specified');
-  }
-  
-  // Validate instrument names
-  if (profile.instruments) {
-    for (const instrument of profile.instruments) {
-      if (typeof instrument !== 'string' || instrument.length > 50) {
-        throw new Error('Invalid instrument name');
-      }
-    }
-  }
 };
 
 export const profileService = {
@@ -74,16 +49,13 @@ export const profileService = {
 
   async updateUserProfile(profile: UserProfile): Promise<UserProfile> {
     try {
-      // Validate input before processing
-      validateProfileInput(profile);
-      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
       const { data, error } = await supabase
         .from('users')
         .update({
-          name: profile.fullName.trim(),
+          name: profile.fullName,
           instruments: profile.instruments,
           notification_pref: stringifyNotificationPreferences(profile.notificationPreferences),
         })
@@ -112,4 +84,4 @@ export const profileService = {
   async updateAvatar(): Promise<{ avatarUrl: string }> {
     throw new Error('Avatar updates are not supported');
   },
-};
+}; 

@@ -128,33 +128,33 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           date: string
-          event_type: string
           id: string
           location: string | null
           start_time: string
           title: string
+          event_type: string
         }
         Insert: {
           band_id?: string | null
           created_at?: string | null
           created_by?: string | null
           date: string
-          event_type?: string
           id?: string
           location?: string | null
           start_time: string
           title: string
+          event_type: string
         }
         Update: {
           band_id?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string
-          event_type?: string
           id?: string
           location?: string | null
           start_time?: string
           title?: string
+          event_type?: string
         }
         Relationships: [
           {
@@ -208,180 +208,6 @@ export type Database = {
           },
         ]
       }
-      setlist_songs: {
-        Row: {
-          created_at: string | null
-          id: string
-          notes: string | null
-          position: number
-          setlist_id: string
-          song_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          position: number
-          setlist_id: string
-          song_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          position?: number
-          setlist_id?: string
-          song_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "setlist_songs_setlist_id_fkey"
-            columns: ["setlist_id"]
-            isOneToOne: false
-            referencedRelation: "setlists"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "setlist_songs_song_id_fkey"
-            columns: ["song_id"]
-            isOneToOne: false
-            referencedRelation: "songs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      setlists: {
-        Row: {
-          created_at: string | null
-          created_by: string
-          event_id: string
-          id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by: string
-          event_id: string
-          id?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string
-          event_id?: string
-          id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "setlists_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "setlists_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      songs: {
-        Row: {
-          artist: string
-          band_id: string | null
-          created_at: string | null
-          created_by: string | null
-          id: string
-          song_sheet_path: string | null
-          spotify_link: string | null
-          title: string
-        }
-        Insert: {
-          artist: string
-          band_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          song_sheet_path?: string | null
-          spotify_link?: string | null
-          title: string
-        }
-        Update: {
-          artist?: string
-          band_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          song_sheet_path?: string | null
-          spotify_link?: string | null
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "songs_band_id_fkey"
-            columns: ["band_id"]
-            isOneToOne: false
-            referencedRelation: "bands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "songs_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      transactions: {
-        Row: {
-          amount: number
-          band_id: string
-          created_at: string | null
-          created_by: string
-          description: string
-          id: string
-          transaction_date: string | null
-        }
-        Insert: {
-          amount: number
-          band_id: string
-          created_at?: string | null
-          created_by: string
-          description: string
-          id?: string
-          transaction_date?: string | null
-        }
-        Update: {
-          amount?: number
-          band_id?: string
-          created_at?: string | null
-          created_by?: string
-          description?: string
-          id?: string
-          transaction_date?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "transactions_band_id_fkey"
-            columns: ["band_id"]
-            isOneToOne: false
-            referencedRelation: "bands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       users: {
         Row: {
           created_at: string | null
@@ -409,6 +235,180 @@ export type Database = {
         }
         Relationships: []
       }
+      songs: {
+        Row: {
+          id: string
+          band_id: string | null
+          title: string
+          artist: string
+          spotify_link: string | null
+          song_sheet_path: string | null
+          created_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          band_id: string
+          title: string
+          artist: string
+          spotify_link?: string | null
+          song_sheet_path?: string | null
+          created_by: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          band_id?: string | null
+          title?: string
+          artist?: string
+          spotify_link?: string | null
+          song_sheet_path?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "songs_band_id_fkey"
+            columns: ["band_id"]
+            isOneToOne: false
+            referencedRelation: "bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "songs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      setlists: {
+        Row: {
+          id: string
+          event_id: string
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setlists_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setlists_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      setlist_songs: {
+        Row: {
+          id: string
+          setlist_id: string
+          song_id: string
+          position: number
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          setlist_id: string
+          song_id: string
+          position: number
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          setlist_id?: string
+          song_id?: string
+          position?: number
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setlist_songs_setlist_id_fkey"
+            columns: ["setlist_id"]
+            isOneToOne: false
+            referencedRelation: "setlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setlist_songs_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      transactions: {
+        Row: {
+          id: string
+          band_id: string
+          amount: number
+          description: string
+          transaction_date: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          band_id: string
+          amount: number
+          description: string
+          transaction_date?: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          band_id?: string
+          amount?: number
+          description?: string
+          transaction_date?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_band_id_fkey"
+            columns: ["band_id"]
+            isOneToOne: false
+            referencedRelation: "bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -425,29 +425,27 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -455,22 +453,20 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -478,22 +474,20 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -501,23 +495,21 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof PublicSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -526,12 +518,6 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const

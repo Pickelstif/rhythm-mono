@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,21 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Mail, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
 
 interface InviteMemberDialogProps {
   bandId: string;
   onMemberInvited?: () => void;
 }
 
-// Input validation helper
-const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
-};
-
 const InviteMemberDialog = ({ bandId, onMemberInvited }: InviteMemberDialogProps) => {
-  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -32,98 +23,45 @@ const InviteMemberDialog = ({ bandId, onMemberInvited }: InviteMemberDialogProps
     return `${baseUrl}/join-band/${bandId}`;
   };
 
-  const checkUserPermissions = async (): Promise<boolean> => {
-    if (!user) return false;
-    
-    try {
-      const { data: memberData, error } = await supabase
-        .from("band_members")
-        .select("role")
-        .eq("band_id", bandId)
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error checking permissions:", error);
-        return false;
-      }
-
-      return memberData?.role === "leader";
-    } catch (error) {
-      console.error("Error checking permissions:", error);
-      return false;
-    }
-  };
-
   const handleEmailInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
-    // Validate email format
-    if (!validateEmail(email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
     try {
       setLoading(true);
 
-      // Check if user has permission to invite members
-      const hasPermission = await checkUserPermissions();
-      if (!hasPermission) {
-        toast.error("You don't have permission to invite members to this band");
-        return;
-      }
-
       // Check if user exists
-      const { data: existingUser, error: userError } = await supabase
+      const { data: user, error: userError } = await supabase
         .from("users")
         .select("id")
-        .eq("email", email.toLowerCase().trim())
+        .eq("email", email)
         .single();
 
       if (userError && userError.code !== "PGRST116") {
         throw userError;
       }
 
-      if (existingUser) {
-        // Check if user is already a member
-        const { data: existingMember, error: memberCheckError } = await supabase
-          .from("band_members")
-          .select("id")
-          .eq("band_id", bandId)
-          .eq("user_id", existingUser.id)
-          .single();
-
-        if (memberCheckError && memberCheckError.code !== "PGRST116") {
-          throw memberCheckError;
-        }
-
-        if (existingMember) {
-          toast.error("This user is already a member of the band");
-          return;
-        }
-
-        // Add user to the band
+      if (user) {
+        // User exists, add them to the band
         const { error: memberError } = await supabase
           .from("band_members")
           .insert([
             {
               band_id: bandId,
-              user_id: existingUser.id,
+              user_id: user.id,
               role: "member",
               joined_at: new Date().toISOString(),
             },
           ]);
 
         if (memberError) throw memberError;
-        
-        toast.success("Member added to the band successfully!");
       } else {
-        // User doesn't exist, show message about invitation
-        toast.info("User not found. Please share the invite link with them to join.");
+        // User doesn't exist, send invite email
+        // TODO: Implement email sending service
+        console.log("Sending invite email to:", email);
       }
 
+      toast.success("Invitation sent successfully!");
       setOpen(false);
       setEmail("");
       onMemberInvited?.();
@@ -136,8 +74,7 @@ const InviteMemberDialog = ({ bandId, onMemberInvited }: InviteMemberDialogProps
   };
 
   const handleCopyLink = () => {
-    const link = generateInviteLink();
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(inviteLink);
     toast.success("Invite link copied to clipboard!");
   };
 
@@ -165,7 +102,6 @@ const InviteMemberDialog = ({ bandId, onMemberInvited }: InviteMemberDialogProps
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email address"
-                maxLength={254}
                 required
               />
             </div>
@@ -198,4 +134,4 @@ const InviteMemberDialog = ({ bandId, onMemberInvited }: InviteMemberDialogProps
   );
 };
 
-export default InviteMemberDialog;
+export default InviteMemberDialog; 
