@@ -299,26 +299,6 @@ export const createMockBand = (name: string, createdBy: string): Band => {
   };
 };
 
-export const createMockEvent = (eventData: {
-  bandId: string;
-  title: string;
-  location?: string;
-  startTime: Date;
-  eventType: 'rehearsal' | 'gig';
-  createdBy: string;
-}): Event => ({
-  id: `event-${Date.now()}`,
-  bandId: eventData.bandId,
-  title: eventData.title,
-  location: eventData.location || "",
-  startTime: eventData.startTime,
-  eventType: eventData.eventType,
-  attendees: [],
-  createdBy: eventData.createdBy,
-  createdAt: new Date(),
-});
-
-// Fix the createMockEvent function
 export const createMockEvent = (data: Partial<Event>): Event => ({
   id: data.id || `event-${Date.now()}`,
   bandId: data.bandId || "band-1",
@@ -330,4 +310,3 @@ export const createMockEvent = (data: Partial<Event>): Event => ({
   createdBy: data.createdBy || "user-1",
   createdAt: data.createdAt || new Date(),
 });
-
