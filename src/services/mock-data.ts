@@ -1,143 +1,148 @@
+
 import { Band, User, Event } from "@/types";
 
 // Mock current user
 export const currentUser: User = {
-  id: "user1",
-  name: "Jane Smith",
-  email: "jane@example.com",
-  avatar: "https://ui-avatars.com/api/?name=Jane+Smith&background=8b5cf6&color=fff",
+  id: "user-1",
+  name: "John Doe",
+  email: "john.doe@example.com",
+  avatar: "/placeholder.svg",
   instruments: ["Guitar", "Vocals"]
 };
 
-// Mock bands
+// Mock users
+export const mockUsers: User[] = [
+  currentUser,
+  {
+    id: "user-2",
+    name: "Jane Smith",
+    email: "jane.smith@example.com",
+    avatar: "/placeholder.svg",
+    instruments: ["Bass"]
+  },
+  {
+    id: "user-3",
+    name: "Mike Johnson",
+    email: "mike.johnson@example.com",
+    avatar: "/placeholder.svg",
+    instruments: ["Drums"]
+  },
+  {
+    id: "user-4",
+    name: "Sarah Wilson",
+    email: "sarah.wilson@example.com",
+    avatar: "/placeholder.svg",
+    instruments: ["Piano", "Vocals"]
+  },
+  {
+    id: "user-5",
+    name: "Alex Brown",
+    email: "alex.brown@example.com",
+    avatar: "/placeholder.svg",
+    instruments: ["Saxophone"]
+  },
+  {
+    id: "user-6",
+    name: "Emily Davis",
+    email: "emily.davis@example.com",
+    avatar: "/placeholder.svg",
+    instruments: ["Trumpet"]
+  }
+];
+
+// Mock bands with events
 export const mockBands: Band[] = [
   {
-    id: "band1",
-    name: "Midnight Groove",
-    description: "Jazz fusion band with a modern twist",
+    id: "band-1",
+    name: "The Rockers",
+    description: "A high-energy rock band",
     members: [
       {
-        userId: "user1",
-        name: "Jane Smith",
+        userId: "user-1",
+        name: "John Doe",
         role: "leader",
-        avatar: "https://ui-avatars.com/api/?name=Jane+Smith&background=8b5cf6&color=fff",
-        instruments: ["Guitar", "Vocals"],
-        availability: [
-          new Date(2025, 3, 8), 
-          new Date(2025, 3, 9), 
-          new Date(2025, 3, 10),
-          new Date(2025, 3, 15),
-          new Date(2025, 3, 16)
-        ]
+        avatar: "/placeholder.svg",
+        instruments: ["Guitar", "Vocals"]
       },
       {
-        userId: "user2",
-        name: "Alex Johnson",
+        userId: "user-2", 
+        name: "Jane Smith",
         role: "member",
-        avatar: "https://ui-avatars.com/api/?name=Alex+Johnson&background=8b5cf6&color=fff",
-        instruments: ["Bass"],
-        availability: [
-          new Date(2025, 3, 8), 
-          new Date(2025, 3, 9),
-          new Date(2025, 3, 16),
-          new Date(2025, 3, 17)
-        ]
+        avatar: "/placeholder.svg",
+        instruments: ["Bass"]
       },
       {
-        userId: "user3",
-        name: "Olivia Williams",
+        userId: "user-3",
+        name: "Mike Johnson", 
         role: "member",
-        avatar: "https://ui-avatars.com/api/?name=Olivia+Williams&background=8b5cf6&color=fff",
-        instruments: ["Drums"],
-        availability: [
-          new Date(2025, 3, 9), 
-          new Date(2025, 3, 10), 
-          new Date(2025, 3, 15),
-          new Date(2025, 3, 16),
-          new Date(2025, 3, 17)
-        ]
+        avatar: "/placeholder.svg",
+        instruments: ["Drums"]
       }
     ],
     events: [
       {
-        id: "event1",
-        bandId: "band1",
-        title: "Rehearsal",
-        location: "Sonic Studio, Room 3",
-        startTime: new Date(2025, 3, 9, 19, 0),
-        attendees: ["user1", "user2", "user3"],
-        createdBy: "user1",
-        createdAt: new Date(2025, 3, 2)
+        id: "event-1",
+        bandId: "band-1",
+        title: "Summer Festival Gig",
+        location: "Central Park Amphitheater",
+        startTime: new Date(2024, 6, 15, 19, 0),
+        eventType: "gig",
+        attendees: ["user-1", "user-2", "user-3"],
+        createdBy: "user-1",
+        createdAt: new Date(2024, 5, 1)
       },
       {
-        id: "event2",
-        bandId: "band1",
-        title: "Live at Jazz Lounge",
-        location: "The Jazz Lounge",
-        startTime: new Date(2025, 3, 16, 20, 0),
-        attendees: ["user1", "user2", "user3"],
-        createdBy: "user1",
-        createdAt: new Date(2025, 3, 3)
+        id: "event-2", 
+        bandId: "band-1",
+        title: "Weekly Practice Session",
+        location: "Studio B - Music Center",
+        startTime: new Date(2024, 6, 8, 18, 0),
+        eventType: "rehearsal",
+        attendees: ["user-1", "user-2"],
+        createdBy: "user-1",
+        createdAt: new Date(2024, 5, 20)
       }
     ],
     createdAt: new Date(2025, 2, 15)
   },
   {
-    id: "band2",
-    name: "Electric Symphony",
-    description: "Electronic rock ensemble",
+    id: "band-2",
+    name: "Jazz Collective",
+    description: "Smooth jazz ensemble",
     members: [
       {
-        userId: "user1",
-        name: "Jane Smith",
-        role: "member",
-        avatar: "https://ui-avatars.com/api/?name=Jane+Smith&background=8b5cf6&color=fff",
-        instruments: ["Guitar"],
-        availability: [
-          new Date(2025, 3, 8), 
-          new Date(2025, 3, 10), 
-          new Date(2025, 3, 15),
-          new Date(2025, 3, 17)
-        ]
+        userId: "user-4",
+        name: "Sarah Wilson",
+        role: "leader", 
+        avatar: "/placeholder.svg",
+        instruments: ["Piano", "Vocals"]
       },
       {
-        userId: "user4",
-        name: "Michael Brown",
-        role: "leader",
-        avatar: "https://ui-avatars.com/api/?name=Michael+Brown&background=8b5cf6&color=fff",
-        instruments: ["Keyboards", "Synth"],
-        availability: [
-          new Date(2025, 3, 10), 
-          new Date(2025, 3, 11), 
-          new Date(2025, 3, 17),
-          new Date(2025, 3, 18)
-        ]
+        userId: "user-5",
+        name: "Alex Brown",
+        role: "member",
+        avatar: "/placeholder.svg", 
+        instruments: ["Saxophone"]
       },
       {
-        userId: "user5",
-        name: "Sophie Chen",
+        userId: "user-6",
+        name: "Emily Davis",
         role: "member",
-        avatar: "https://ui-avatars.com/api/?name=Sophie+Chen&background=8b5cf6&color=fff",
-        instruments: ["Drums", "Percussion"],
-        availability: [
-          new Date(2025, 3, 10), 
-          new Date(2025, 3, 11), 
-          new Date(2025, 3, 15),
-          new Date(2025, 3, 17),
-          new Date(2025, 3, 18)
-        ]
+        avatar: "/placeholder.svg",
+        instruments: ["Trumpet"]
       }
     ],
     events: [
       {
-        id: "event3",
-        bandId: "band2",
-        title: "Studio Session",
-        location: "Soundwave Studios",
-        startTime: new Date(2025, 3, 10, 13, 0),
-        attendees: ["user1", "user4", "user5"],
-        createdBy: "user4",
-        createdAt: new Date(2025, 3, 1)
+        id: "event-3",
+        bandId: "band-2", 
+        title: "Blue Note Jazz Night",
+        location: "Blue Note Jazz Club",
+        startTime: new Date(2024, 6, 22, 20, 30),
+        eventType: "gig",
+        attendees: ["user-4", "user-5", "user-6"],
+        createdBy: "user-4",
+        createdAt: new Date(2024, 5, 15)
       }
     ],
     createdAt: new Date(2025, 2, 20)
@@ -149,10 +154,10 @@ export const mockEvents: Event[] = [
   {
     id: "event-1",
     bandId: "band-1",
-    title: "Summer Festival Performance",
+    title: "Summer Festival Gig",
     location: "Central Park Amphitheater",
     startTime: new Date(2024, 6, 15, 19, 0),
-    eventType: "performance",
+    eventType: "gig",
     attendees: ["user-1", "user-2", "user-3"],
     createdBy: "user-1",
     createdAt: new Date(2024, 5, 1),
@@ -174,7 +179,7 @@ export const mockEvents: Event[] = [
     title: "Jazz Night at Blue Note",
     location: "Blue Note Jazz Club",
     startTime: new Date(2024, 6, 22, 20, 30),
-    eventType: "performance",
+    eventType: "gig",
     attendees: ["user-4", "user-5", "user-6"],
     createdBy: "user-4",
     createdAt: new Date(2024, 5, 15),
@@ -182,122 +187,136 @@ export const mockEvents: Event[] = [
 ];
 
 // Mock data service functions
-export const getBands = async (): Promise<Band[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockBands);
-    }, 500);
-  });
+export const getBandsByUserId = (userId: string): Band[] => {
+  return mockBands.filter(band => 
+    band.members.some(member => member.userId === userId)
+  );
 };
 
-export const getBandById = async (id: string): Promise<Band | undefined> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockBands.find(band => band.id === id));
-    }, 500);
-  });
+export const getBandById = (bandId: string): Band | undefined => {
+  return mockBands.find(band => band.id === bandId);
 };
 
-export const getCurrentUser = async (): Promise<User> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(currentUser);
-    }, 500);
-  });
+export const getUserById = (userId: string): User | undefined => {
+  return mockUsers.find(user => user.id === userId);
 };
 
-export const getMemberAvailabilityForMonth = async (
-  bandId: string,
-  year: number,
-  month: number
-): Promise<{ [userId: string]: Date[] }> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const band = mockBands.find(b => b.id === bandId);
-      if (!band) {
-        resolve({});
-        return;
-      }
-      
-      const result: { [userId: string]: Date[] } = {};
-      band.members.forEach(member => {
-        if (member.availability) {
-          // Filter only dates from the specified month and year
-          const filteredDates = member.availability.filter(date => 
-            date.getFullYear() === year && date.getMonth() === month
-          );
-          result[member.userId] = filteredDates;
-        }
-      });
-      
-      resolve(result);
-    }, 500);
-  });
+export const getEventsByBandId = (bandId: string): Event[] => {
+  return mockEvents.filter(event => event.bandId === bandId);
 };
 
-export const updateMemberAvailability = async (
-  bandId: string,
-  userId: string,
-  dates: Date[]
-): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const bandIndex = mockBands.findIndex(b => b.id === bandId);
-      if (bandIndex === -1) {
-        resolve(false);
-        return;
-      }
-      
-      const memberIndex = mockBands[bandIndex].members.findIndex(m => m.userId === userId);
-      if (memberIndex === -1) {
-        resolve(false);
-        return;
-      }
-      
-      // Update the member's availability
-      mockBands[bandIndex].members[memberIndex].availability = dates;
-      
-      resolve(true);
-    }, 500);
-  });
+export const getUpcomingEvents = (bandId: string): Event[] => {
+  const now = new Date();
+  return getEventsByBandId(bandId)
+    .filter(event => event.startTime > now)
+    .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 };
 
-export const createEvent = async (
-  bandId: string, 
-  title: string,
-  description: string,
-  startTime: Date,
-  endTime: Date,
-  location: string,
-  attendees: string[]
-): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const bandIndex = mockBands.findIndex(b => b.id === bandId);
-      if (bandIndex === -1) {
-        resolve(false);
-        return;
-      }
-      
-      const newEvent = {
-        id: `event${Math.floor(Math.random() * 10000)}`,
-        bandId,
-        title,
-        description,
-        startTime,
-        endTime,
-        location,
-        attendees,
-        createdBy: currentUser.id,
-        createdAt: new Date()
-      };
-      
-      mockBands[bandIndex].events.push(newEvent);
-      
-      resolve(true);
-    }, 500);
-  });
+// Mock availability data
+export const mockAvailability = [
+  {
+    userId: "user-1",
+    bandId: "band-1", 
+    dates: [
+      new Date(2024, 6, 15),
+      new Date(2024, 6, 16),
+      new Date(2024, 6, 17),
+      new Date(2024, 6, 22),
+      new Date(2024, 6, 23),
+      new Date(2024, 6, 24)
+    ]
+  },
+  {
+    userId: "user-2",
+    bandId: "band-1",
+    dates: [
+      new Date(2024, 6, 15),
+      new Date(2024, 6, 17), 
+      new Date(2024, 6, 18),
+      new Date(2024, 6, 22),
+      new Date(2024, 6, 24),
+      new Date(2024, 6, 25)
+    ]
+  },
+  {
+    userId: "user-3", 
+    bandId: "band-1",
+    dates: [
+      new Date(2024, 6, 16),
+      new Date(2024, 6, 17),
+      new Date(2024, 6, 18),
+      new Date(2024, 6, 23),
+      new Date(2024, 6, 24),
+      new Date(2024, 6, 25)
+    ]
+  }
+];
+
+export const getAvailabilityByBandId = (bandId: string) => {
+  return mockAvailability.filter(availability => availability.bandId === bandId);
 };
+
+export const updateUserAvailability = (userId: string, bandId: string, dates: Date[]) => {
+  const existingIndex = mockAvailability.findIndex(
+    availability => availability.userId === userId && availability.bandId === bandId
+  );
+  
+  if (existingIndex >= 0) {
+    mockAvailability[existingIndex].dates = dates;
+  } else {
+    mockAvailability.push({ userId, bandId, dates });
+  }
+};
+
+export const addMemberToBand = (bandId: string, user: User, role: "leader" | "member" = "member") => {
+  const band = getBandById(bandId);
+  if (band) {
+    const newMember = {
+      userId: user.id,
+      name: user.name,
+      role,
+      avatar: user.avatar,
+      instruments: user.instruments
+    };
+    band.members.push(newMember);
+  }
+};
+
+export const createMockBand = (name: string, createdBy: string): Band => {
+  const creator = getUserById(createdBy);
+  return {
+    id: `band-${Date.now()}`,
+    name,
+    members: creator ? [{
+      userId: creator.id,
+      name: creator.name,
+      role: "leader",
+      avatar: creator.avatar,
+      instruments: creator.instruments
+    }] : [],
+    events: [],
+    createdAt: new Date()
+  };
+};
+
+export const createMockEvent = (eventData: {
+  bandId: string;
+  title: string;
+  location?: string;
+  startTime: Date;
+  eventType: 'rehearsal' | 'gig';
+  createdBy: string;
+}): Event => ({
+  id: `event-${Date.now()}`,
+  bandId: eventData.bandId,
+  title: eventData.title,
+  location: eventData.location || "",
+  startTime: eventData.startTime,
+  eventType: eventData.eventType,
+  attendees: [],
+  createdBy: eventData.createdBy,
+  createdAt: new Date(),
+});
 
 // Fix the createMockEvent function
 export const createMockEvent = (data: Partial<Event>): Event => ({
@@ -311,3 +330,4 @@ export const createMockEvent = (data: Partial<Event>): Event => ({
   createdBy: data.createdBy || "user-1",
   createdAt: data.createdAt || new Date(),
 });
+
