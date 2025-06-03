@@ -1,13 +1,16 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    { "path": "./apps/main-app" },
+    { "path": "./apps/organizers-app" }
   ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./apps/main-app/src/*"],
+      "@organizers/*": ["./apps/organizers-app/src/*"],
+      "@shared/types": ["./packages/shared-types/src/index"],
+      "@shared/database": ["./packages/database/src/index"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
