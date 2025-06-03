@@ -250,11 +250,11 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
     const totalMembers = available.length + unavailable.length;
     const availableCount = available.length;
     
-    // Show count only if at least one member is available
-    const showCount = availableCount > 0 && totalMembers > 0;
-    
     // All members available styling
     const allMembersAvailable = availableCount === totalMembers && totalMembers > 0;
+    
+    // Show count only if at least one member is available but NOT all members are available
+    const showCount = availableCount > 0 && totalMembers > 0 && !allMembersAvailable;
     
     return (
       <AvailabilityTooltip
@@ -289,7 +289,13 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
           </span>
           
           {showCount && (
-            <span className="text-[10px] leading-none font-medium text-muted-foreground">
+            <span className={cn(
+              "text-[10px] leading-none font-medium",
+              // Make text more visible on colored backgrounds
+              isSelected 
+                ? "text-gray-800" 
+                : "text-muted-foreground"
+            )}>
               {availableCount}/{totalMembers}
             </span>
           )}
