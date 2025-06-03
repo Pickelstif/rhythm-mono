@@ -216,6 +216,7 @@ export type Database = {
           instruments: string[] | null
           name: string
           notification_pref: string
+          user_type: string
         }
         Insert: {
           created_at?: string | null
@@ -224,6 +225,7 @@ export type Database = {
           instruments?: string[] | null
           name: string
           notification_pref?: string
+          user_type?: string
         }
         Update: {
           created_at?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           instruments?: string[] | null
           name?: string
           notification_pref?: string
+          user_type?: string
         }
         Relationships: []
       }

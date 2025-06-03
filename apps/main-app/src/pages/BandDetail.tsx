@@ -9,6 +9,7 @@ import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil, Music, 
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
+import { BandAvailabilityCalendar } from "@/components/BandAvailabilityCalendar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -470,18 +471,19 @@ const BandDetail = () => {
               </div>
             </div>
 
-            <Tabs defaultValue="availability" className="space-y-6">
+            <Tabs defaultValue="member-availability" className="space-y-6">
               <TabsList>
-                <TabsTrigger value="availability">Availability</TabsTrigger>
+                <TabsTrigger value="member-availability">Member Availability</TabsTrigger>
+                <TabsTrigger value="band-availability">Band Availability</TabsTrigger>
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="songs">Songs</TabsTrigger>
                 <TabsTrigger value="members">Members</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="availability">
+              <TabsContent value="member-availability">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Band Availability</CardTitle>
+                    <CardTitle>Member Availability</CardTitle>
                     <CardDescription>
                       See when band members are available for rehearsals and performances.
                     </CardDescription>
@@ -530,6 +532,13 @@ const BandDetail = () => {
                     />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="band-availability">
+                <BandAvailabilityCalendar 
+                  bandId={band.id}
+                  isLeader={isLeader}
+                />
               </TabsContent>
 
               <TabsContent value="events" className="space-y-6">

@@ -1,7 +1,10 @@
+export type UserType = 'band' | 'organizer';
+
 export type User = {
   id: string;
   name: string;
   email: string;
+  user_type?: UserType;
   avatar?: string;
   instruments?: string[];
 };
@@ -72,6 +75,7 @@ export interface UserProfile {
   id: string;
   email: string;
   fullName: string;
+  user_type?: UserType;
   instruments: string[];
   notificationPreferences: NotificationPreferences;
   createdAt: string;
