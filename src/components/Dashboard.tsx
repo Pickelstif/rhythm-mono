@@ -84,6 +84,7 @@ const Dashboard = () => {
             attendees: [],
             createdBy: event.created_by,
             createdAt: new Date(event.created_at),
+            eventType: event.event_type as "rehearsal" | "gig",
           }));
 
           return {
