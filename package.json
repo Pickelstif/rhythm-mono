@@ -9,6 +9,8 @@
   ],
   "scripts": {
     "build": "turbo build",
+    "build:main-app": "turbo build --filter=@rhythm-sync/main-app",
+    "build:organizers-app": "turbo build --filter=@rhythm-sync/organizers-app",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "clean": "turbo clean",
