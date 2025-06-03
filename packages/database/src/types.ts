@@ -54,6 +54,47 @@ export type Database = {
           },
         ]
       }
+      band_availability: {
+        Row: {
+          available_date: string
+          band_id: string
+          created_at: string
+          end_time: string | null
+          id: string
+          notes: string | null
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          available_date: string
+          band_id: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          available_date?: string
+          band_id?: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_band_availability_band"
+            columns: ["band_id"]
+            isOneToOne: false
+            referencedRelation: "bands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       band_members: {
         Row: {
           band_id: string | null
@@ -208,6 +249,54 @@ export type Database = {
           },
         ]
       }
+      schedules: {
+        Row: {
+          id: string
+          date: string
+          band_id: string
+          start_time: string
+          end_time: string
+          organizer_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          date: string
+          band_id: string
+          start_time: string
+          end_time: string
+          organizer_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          date?: string
+          band_id?: string
+          start_time?: string
+          end_time?: string
+          organizer_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_schedules_band"
+            columns: ["band_id"]
+            isOneToOne: false
+            referencedRelation: "bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_schedules_organizer"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
@@ -216,6 +305,7 @@ export type Database = {
           instruments: string[] | null
           name: string
           notification_pref: string
+          user_type: string
         }
         Insert: {
           created_at?: string | null
@@ -224,6 +314,7 @@ export type Database = {
           instruments?: string[] | null
           name: string
           notification_pref?: string
+          user_type?: string
         }
         Update: {
           created_at?: string | null
@@ -232,6 +323,7 @@ export type Database = {
           instruments?: string[] | null
           name?: string
           notification_pref?: string
+          user_type?: string
         }
         Relationships: []
       }

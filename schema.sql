@@ -10,8 +10,20 @@ CREATE TABLE public.availability (
   parsed_from text,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT availability_pkey PRIMARY KEY (id),
-  CONSTRAINT availability_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id),
-  CONSTRAINT availability_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT availability_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT availability_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id)
+);
+CREATE TABLE public.band_availability (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  band_id uuid NOT NULL,
+  available_date date NOT NULL,
+  start_time time without time zone,
+  end_time time without time zone,
+  notes text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT band_availability_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_band_availability_band FOREIGN KEY (band_id) REFERENCES public.bands(id)
 );
 CREATE TABLE public.band_members (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -25,7 +37,7 @@ CREATE TABLE public.band_members (
 );
 CREATE TABLE public.bands (
   id uuid NOT NULL,
-  name text NOT NULL,
+  name text NOT NULL UNIQUE,
   created_by uuid,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT bands_pkey PRIMARY KEY (id),
@@ -55,6 +67,19 @@ CREATE TABLE public.notifications (
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.schedules (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  date date NOT NULL,
+  band_id uuid NOT NULL,
+  start_time time without time zone NOT NULL,
+  end_time time without time zone NOT NULL,
+  organizer_id uuid NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT schedules_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_schedules_band FOREIGN KEY (band_id) REFERENCES public.bands(id),
+  CONSTRAINT fk_schedules_organizer FOREIGN KEY (organizer_id) REFERENCES public.users(id)
+);
 CREATE TABLE public.setlist_songs (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   setlist_id uuid NOT NULL,
@@ -63,8 +88,8 @@ CREATE TABLE public.setlist_songs (
   notes text,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT setlist_songs_pkey PRIMARY KEY (id),
-  CONSTRAINT setlist_songs_setlist_id_fkey FOREIGN KEY (setlist_id) REFERENCES public.setlists(id),
-  CONSTRAINT setlist_songs_song_id_fkey FOREIGN KEY (song_id) REFERENCES public.songs(id)
+  CONSTRAINT setlist_songs_song_id_fkey FOREIGN KEY (song_id) REFERENCES public.songs(id),
+  CONSTRAINT setlist_songs_setlist_id_fkey FOREIGN KEY (setlist_id) REFERENCES public.setlists(id)
 );
 CREATE TABLE public.setlists (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -108,5 +133,6 @@ CREATE TABLE public.users (
   instruments ARRAY DEFAULT '{}'::text[],
   notification_pref text NOT NULL DEFAULT 'email'::text,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  user_type text NOT NULL DEFAULT 'band'::text CHECK (user_type = ANY (ARRAY['band'::text, 'organizer'::text])),
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );

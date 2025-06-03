@@ -24,9 +24,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Function to ensure user has correct user_type in database
+  const ensureUserInDatabase = async (user: User) => {
+    try {
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('id, user_type')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // Error other than "not found"
+        console.error('Error checking user in database:', fetchError);
+        return;
+      }
+
+      if (!existingUser) {
+        // User doesn't exist in our users table, create them
+        // Default to 'band' type for main-app users
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+            user_type: 'band', // Main-app users are band users by default
+            notification_pref: 'email',
+          });
+
+        if (insertError) {
+          console.error('Error creating user in database:', insertError);
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring user in database:', error);
+    }
+  };
+
   // Function to check if user is a leader and clean up past events
   const handleUserSession = async (session: Session | null) => {
     if (session?.user) {
+      await ensureUserInDatabase(session.user);
       const isLeader = await checkUserIsLeader(session.user.id);
       if (isLeader) {
         await cleanupPastEvents();
@@ -70,6 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Explicitly check for leader role after sign-in
       if (data.user) {
+        await ensureUserInDatabase(data.user);
         const isLeader = await checkUserIsLeader(data.user.id);
         if (isLeader) {
           await cleanupPastEvents();
@@ -89,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
-      const { error: authError } = await supabase.auth.signUp({ 
+      const { data, error: authError } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -102,6 +141,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (authError) {
         throw authError;
       }
+
+      // Note: User will be created in database via trigger or when they first sign in
+      // The trigger should automatically set user_type based on email
       
       toast.success('Sign up successful! Please check your email for verification.');
     } catch (error: unknown) {

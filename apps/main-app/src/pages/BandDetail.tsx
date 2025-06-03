@@ -9,6 +9,7 @@ import { CalendarDays, MapPin, Plus, Clock, Users, Copy, Trash2, Pencil, Music, 
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
+import { BandAvailabilityCalendar } from "@/components/BandAvailabilityCalendar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,6 +30,13 @@ import { SetlistModal } from "@/components/SetlistModal";
 import { Database } from "@/integrations/supabase/types";
 import { ImportSpotifyPlaylistModal } from "@/components/ImportSpotifyPlaylistModal";
 import { Switch } from "@/components/ui/switch";
+import { 
+  parseDateString, 
+  formatDateToString, 
+  getTodayString, 
+  sortDateStrings,
+  parseDateStrings
+} from "@/utils/dateUtils";
 
 // Type definitions for Supabase query results
 type SetlistRow = Database['public']['Tables']['setlists']['Row'];
@@ -157,13 +165,13 @@ const BandDetail = () => {
             .select("date")
             .eq("user_id", member.user_id)
             .eq("band_id", bandId)
-            .gte("date", new Date().toISOString().split("T")[0]);
+            .gte("date", getTodayString());
 
           if (availabilityError) throw availabilityError;
           
           // Convert dates to ISO strings and remove duplicates
           const uniqueDates = new Set(
-            availability?.map(a => new Date(a.date).toISOString().split("T")[0]) || []
+            availability?.map(a => a.date) || []
           );
           return Array.from(uniqueDates);
         })
@@ -171,7 +179,7 @@ const BandDetail = () => {
 
       // Find dates where all members are available
       const allDates = new Set(memberAvailability.flat());
-      const commonDates: Date[] = [];
+      const commonDateStrings: string[] = [];
 
       // For each date, check if all members have it
       allDates.forEach(dateStr => {
@@ -180,12 +188,13 @@ const BandDetail = () => {
         );
         
         if (isCommonDate) {
-          commonDates.push(new Date(dateStr));
+          commonDateStrings.push(dateStr);
         }
       });
 
-      // Sort dates chronologically
-      commonDates.sort((a, b) => a.getTime() - b.getTime());
+      // Sort dates chronologically and convert to Date objects
+      const sortedDateStrings = sortDateStrings(commonDateStrings);
+      const commonDates = parseDateStrings(sortedDateStrings);
 
       // Update the band availability map
       setBandAvailability(prev => {
@@ -470,18 +479,19 @@ const BandDetail = () => {
               </div>
             </div>
 
-            <Tabs defaultValue="availability" className="space-y-6">
+            <Tabs defaultValue="member-availability" className="space-y-6">
               <TabsList>
-                <TabsTrigger value="availability">Availability</TabsTrigger>
+                <TabsTrigger value="member-availability">Member Availability</TabsTrigger>
+                <TabsTrigger value="band-availability">Band Availability</TabsTrigger>
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="songs">Songs</TabsTrigger>
                 <TabsTrigger value="members">Members</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="availability">
+              <TabsContent value="member-availability">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Band Availability</CardTitle>
+                    <CardTitle>Member Availability</CardTitle>
                     <CardDescription>
                       See when band members are available for rehearsals and performances.
                     </CardDescription>
@@ -530,6 +540,13 @@ const BandDetail = () => {
                     />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="band-availability">
+                <BandAvailabilityCalendar 
+                  bandId={band.id}
+                  isLeader={isLeader}
+                />
               </TabsContent>
 
               <TabsContent value="events" className="space-y-6">
