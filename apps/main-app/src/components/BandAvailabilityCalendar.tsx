@@ -3,13 +3,21 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format, isSameDay } from "date-fns";
+import { format } from "date-fns";
 import { Clock, Plus, Trash2, Edit } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BandAvailabilityModal } from "./BandAvailabilityModal";
+import { 
+  parseDateString, 
+  formatDateToString, 
+  getTodayString, 
+  isSameDate, 
+  isDateInPast,
+  getTodayAtStartOfDay
+} from "@/utils/dateUtils";
 
 interface BandAvailability {
   id: string;
@@ -44,7 +52,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
         .from("band_availability")
         .select("*")
         .eq("band_id", bandId)
-        .gte("available_date", new Date().toISOString().split("T")[0])
+        .gte("available_date", getTodayString())
         .order("available_date", { ascending: true });
 
       if (error) throw error;
@@ -78,17 +86,13 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
           .select("date")
           .eq("user_id", member.user_id)
           .eq("band_id", bandId)
-          .gte("date", new Date().toISOString().split("T")[0]);
+          .gte("date", getTodayString());
 
         if (availabilityError) throw availabilityError;
         
         return {
           userId: member.user_id,
-          dates: availability?.map(a => {
-            // Parse date components to avoid timezone interpretation
-            const [year, month, day] = a.date.split('-').map(Number);
-            return new Date(year, month - 1, day); // month is 0-indexed in JavaScript
-          }) || []
+          dates: availability?.map(a => parseDateString(a.date)) || []
         };
       });
 
@@ -116,7 +120,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
     
     setSelectedDate(date);
     const existingAvailability = availability.find(av => 
-      isSameDay(new Date(av.available_date), date)
+      isSameDate(parseDateString(av.available_date), date)
     );
     
     if (existingAvailability) {
@@ -137,7 +141,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
     if (!isLeader || !user) return;
 
     try {
-      const dateStr = format(availabilityData.date, 'yyyy-MM-dd');
+      const dateStr = formatDateToString(availabilityData.date);
       
       if (editingAvailability) {
         // Update existing availability
@@ -200,18 +204,18 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
 
   const getAvailabilityForDate = (date: Date) => {
     return availability.find(av => 
-      isSameDay(new Date(av.available_date), date)
+      isSameDate(parseDateString(av.available_date), date)
     );
   };
 
   const isAllMembersAvailable = (date: Date) => {
     if (memberAvailability.size === 0) return false;
     
-    const dateStr = format(date, 'yyyy-MM-dd');
+    const dateStr = formatDateToString(date);
     let availableCount = 0;
     
     memberAvailability.forEach((dates, userId) => {
-      const isAvailable = dates.some(d => format(d, 'yyyy-MM-dd') === dateStr);
+      const isAvailable = dates.some(d => formatDateToString(d) === dateStr);
       if (isAvailable) {
         availableCount++;
       }
@@ -222,7 +226,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
 
   const renderDay = (day: Date) => {
     const dayAvailability = getAvailabilityForDate(day);
-    const isPast = day < new Date();
+    const isPast = isDateInPast(day);
     const allMembersAvailable = isAllMembersAvailable(day);
     
     return (
@@ -352,11 +356,33 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
             <Calendar
               mode="single"
               selected={undefined}
-              onSelect={handleDateSelect}
-              className="rounded-md border"
-              disabled={(date) => date < new Date() || !isLeader}
+              onSelect={undefined}
+              disabled={(date) => isDateInPast(date)}
               components={{
-                Day: ({ date }) => renderDay(date),
+                Day: ({ date, ...props }) => renderDay(date),
+              }}
+              className="rounded-md border"
+              classNames={{
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                month: "space-y-4",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-medium",
+                nav: "space-x-1 flex items-center",
+                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex",
+                head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+                row: "flex w-full mt-2",
+                cell: "text-center text-sm relative p-0 focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent",
+                day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100",
+                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day_outside: "text-muted-foreground opacity-50",
+                day_disabled: "text-muted-foreground opacity-50",
+                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                day_hidden: "invisible",
               }}
             />
           </div>
@@ -372,13 +398,13 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">
-                            {format(new Date(av.available_date), "MMMM d, yyyy")}
+                            {format(parseDateString(av.available_date), "MMMM d, yyyy")}
                           </span>
                           <Badge variant="secondary" className="text-xs">
                             <Clock className="h-3 w-3 mr-1" />
                             {formatTimeRange(av.start_time, av.end_time)}
                           </Badge>
-                          {isAllMembersAvailable(new Date(av.available_date)) && (
+                          {isAllMembersAvailable(parseDateString(av.available_date)) && (
                             <Badge variant="outline" className="text-xs border-amber-400 text-amber-600">
                               All members available
                             </Badge>
@@ -391,13 +417,13 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
                         )}
                       </div>
                       {isLeader && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => {
                               setEditingAvailability(av);
-                              setSelectedDate(new Date(av.available_date));
+                              setSelectedDate(parseDateString(av.available_date));
                               setIsModalOpen(true);
                             }}
                           >

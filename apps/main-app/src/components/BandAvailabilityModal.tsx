@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarDays, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseDateString, isDateInPast } from "@/utils/dateUtils";
 
 interface BandAvailability {
   id: string;
@@ -55,8 +56,8 @@ export const BandAvailabilityModal = ({
   useEffect(() => {
     if (isOpen) {
       if (existingAvailability) {
-        // Editing existing availability
-        setDate(new Date(existingAvailability.available_date));
+        // Editing existing availability - parse date string timezone-agnostic
+        setDate(parseDateString(existingAvailability.available_date));
         setStartTime(existingAvailability.start_time || '');
         setEndTime(existingAvailability.end_time || '');
         setNotes(existingAvailability.notes || '');
@@ -155,7 +156,7 @@ export const BandAvailabilityModal = ({
                     setDate(newDate);
                     setIsCalendarOpen(false);
                   }}
-                  disabled={(date) => date < new Date()}
+                  disabled={(date) => isDateInPast(date)}
                   initialFocus
                 />
               </PopoverContent>

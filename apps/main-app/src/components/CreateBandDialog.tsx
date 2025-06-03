@@ -21,22 +21,42 @@ const CreateBandDialog = ({ onBandCreated }: CreateBandDialogProps) => {
   const [nameError, setNameError] = useState("");
   const [checkingName, setCheckingName] = useState(false);
 
-  // Function to check if band name already exists
-  const checkBandNameExists = async (bandName: string): Promise<boolean> => {
-    if (!bandName.trim()) return false;
+  // Function to check if band name already exists and has members
+  const checkBandNameAndMembers = async (bandName: string): Promise<{ exists: boolean; hasMembers: boolean; bandId?: string }> => {
+    if (!bandName.trim()) return { exists: false, hasMembers: false };
     
     try {
-      const { data, error } = await supabase
+      const { data: bands, error } = await supabase
         .from("bands")
         .select("id")
         .ilike("name", bandName.trim())
         .limit(1);
         
       if (error) throw error;
-      return data && data.length > 0;
+      
+      if (!bands || bands.length === 0) {
+        return { exists: false, hasMembers: false };
+      }
+
+      const bandId = bands[0].id;
+
+      // Check if band has any members
+      const { data: members, error: membersError } = await supabase
+        .from("band_members")
+        .select("id")
+        .eq("band_id", bandId)
+        .limit(1);
+
+      if (membersError) throw membersError;
+
+      return {
+        exists: true,
+        hasMembers: members && members.length > 0,
+        bandId
+      };
     } catch (error) {
-      console.error("Error checking band name:", error);
-      return false;
+      console.error("Error checking band name and members:", error);
+      return { exists: false, hasMembers: false };
     }
   };
 
@@ -50,9 +70,14 @@ const CreateBandDialog = ({ onBandCreated }: CreateBandDialogProps) => {
     // Debounce the check
     setCheckingName(true);
     setTimeout(async () => {
-      const exists = await checkBandNameExists(value);
+      const { exists, hasMembers } = await checkBandNameAndMembers(value);
       if (exists && value === name) { // Only update if the name hasn't changed
-        setNameError(`A band named "${value}" already exists. Ask the band leader for an invite link if you're a member.`);
+        if (hasMembers) {
+          setNameError(`A band named "${value}" already exists with members. Ask the band leader for an invite link if you're a member.`);
+        } else {
+          setNameError("");
+          // We could show a message that they can join the empty band, but we'll handle that in submission
+        }
       }
       setCheckingName(false);
     }, 500);
@@ -62,30 +87,48 @@ const CreateBandDialog = ({ onBandCreated }: CreateBandDialogProps) => {
     e.preventDefault();
     if (!user) return;
 
-    // Final check before submission
-    if (nameError) {
-      toast.error("Please fix the band name error before proceeding.");
-      return;
-    }
-    
-    // Check for duplicate name one more time before submission
-    const nameExists = await checkBandNameExists(name);
-    if (nameExists) {
-      setNameError(`A band named "${name}" already exists. Ask the band leader for an invite link if you're a member.`);
-      return;
-    }
-
     try {
       setLoading(true);
 
-      const bandId = uuidv4();
+      // Check for existing band and its membership status
+      const { exists, hasMembers, bandId } = await checkBandNameAndMembers(name);
+      
+      if (exists) {
+        if (hasMembers) {
+          setNameError(`A band named "${name}" already exists with members. Ask the band leader for an invite link if you're a member.`);
+          return;
+        } else {
+          // Band exists but has no members - join as leader
+          const { error: memberError } = await supabase
+            .from("band_members")
+            .insert([
+              {
+                band_id: bandId,
+                user_id: user.id,
+                role: "leader",
+                joined_at: new Date().toISOString(),
+              },
+            ]);
 
-      // Create the band
+          if (memberError) throw memberError;
+
+          toast.success("Successfully joined the band as leader!");
+          setOpen(false);
+          setName("");
+          setNameError("");
+          onBandCreated();
+          return;
+        }
+      }
+
+      // Band doesn't exist - create new band
+      const newBandId = uuidv4();
+
       const { data: band, error: bandError } = await supabase
         .from("bands")
         .insert([
           {
-            id: bandId,
+            id: newBandId,
             name: name.trim(),
             created_by: user.id,
           },
@@ -96,13 +139,40 @@ const CreateBandDialog = ({ onBandCreated }: CreateBandDialogProps) => {
       if (bandError) {
         // Check if this is a unique constraint violation (duplicate band name)
         if (bandError.code === '23505' && bandError.message.includes('bands_name_unique')) {
-          toast.error(
-            `A band named "${name}" already exists. If you're a member of this band, please ask the band leader for an invite link instead of creating a new band.`,
-            {
-              duration: 6000,
-            }
-          );
-          return;
+          // This could happen if another user created the band between our check and insertion
+          // Re-check if we can join the band
+          const { exists: recheckExists, hasMembers: recheckHasMembers, bandId: recheckBandId } = await checkBandNameAndMembers(name);
+          
+          if (recheckExists && !recheckHasMembers) {
+            // Band was created but has no members - join as leader
+            const { error: memberError } = await supabase
+              .from("band_members")
+              .insert([
+                {
+                  band_id: recheckBandId,
+                  user_id: user.id,
+                  role: "leader",
+                  joined_at: new Date().toISOString(),
+                },
+              ]);
+
+            if (memberError) throw memberError;
+
+            toast.success("Successfully joined the band as leader!");
+            setOpen(false);
+            setName("");
+            setNameError("");
+            onBandCreated();
+            return;
+          } else {
+            toast.error(
+              `A band named "${name}" already exists with members. If you're a member of this band, please ask the band leader for an invite link instead of creating a new band.`,
+              {
+                duration: 6000,
+              }
+            );
+            return;
+          }
         }
         throw bandError;
       }

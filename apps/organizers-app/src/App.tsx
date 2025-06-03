@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import { SchedulerPage } from "./features/scheduler/SchedulerPage";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,11 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/scheduler" element={
+                <ProtectedRoute>
+                  <SchedulerPage />
                 </ProtectedRoute>
               } />
             </Routes>

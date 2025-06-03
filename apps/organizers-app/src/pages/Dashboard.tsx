@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import Header from '../components/Header';
@@ -217,7 +218,19 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link to="/scheduler">
+              <Button 
+                variant="outline" 
+                className="w-full p-6 h-auto flex-col items-start space-y-3 bg-card hover:bg-accent"
+              >
+                <Clock className="h-8 w-8 text-rhythm-600 dark:text-rhythm-400" />
+                <div className="text-left">
+                  <div className="font-medium">Week Scheduler</div>
+                  <div className="text-sm text-muted-foreground">Drag and drop bands across the week</div>
+                </div>
+              </Button>
+            </Link>
             <Button 
               variant="outline" 
               className="p-6 h-auto flex-col items-start space-y-3 bg-card hover:bg-accent"

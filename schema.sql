@@ -37,7 +37,7 @@ CREATE TABLE public.band_members (
 );
 CREATE TABLE public.bands (
   id uuid NOT NULL,
-  name text NOT NULL,
+  name text NOT NULL UNIQUE,
   created_by uuid,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT bands_pkey PRIMARY KEY (id),
@@ -133,5 +133,6 @@ CREATE TABLE public.users (
   instruments ARRAY DEFAULT '{}'::text[],
   notification_pref text NOT NULL DEFAULT 'email'::text,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  user_type text NOT NULL DEFAULT 'band'::text CHECK (user_type = ANY (ARRAY['band'::text, 'organizer'::text])),
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );

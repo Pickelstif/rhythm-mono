@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FormValues } from "./CreateEventForm";
 import { Event } from "@/types";
+import { formatDateToString } from "@/utils/dateUtils";
 
 interface CreateEventModalProps {
   bandId: string;
@@ -27,8 +28,8 @@ export function CreateEventModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Format the date and time for database
-      const formattedDate = values.date.toISOString().split('T')[0];
+      // Format the date for database using timezone-agnostic method
+      const formattedDate = formatDateToString(values.date);
       
       // Create a proper timestamp by combining date and time
       const [hours, minutes] = values.startTime.split(':');
