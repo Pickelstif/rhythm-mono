@@ -1,0 +1,99 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      main-app: ${{ steps.changes.outputs.main-app }}
+      organizers-app: ${{ steps.changes.outputs.organizers-app }}
+      packages: ${{ steps.changes.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            main-app:
+              - 'apps/main-app/**'
+              - 'packages/**'
+            organizers-app:
+              - 'apps/organizers-app/**'
+              - 'packages/**'
+            packages:
+              - 'packages/**'
+
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint
+        run: npm run lint
+      
+      - name: Type check
+        run: npm run type-check
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Test
+        run: npm run test
+
+  deploy-main-app:
+    needs: [changes, test-and-build]
+    if: needs.changes.outputs.main-app == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build --filter=main-app
+      
+      - name: Deploy to Loveable.dev
+        run: |
+          # Loveable.dev deployment commands will go here
+          echo "Deploying main-app to loveable.dev"
+
+  deploy-organizers-app:
+    needs: [changes, test-and-build]
+    if: needs.changes.outputs.organizers-app == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build --filter=organizers-app
+      
+      - name: Deploy to Loveable.dev
+        run: |
+          # Loveable.dev deployment commands will go here
+          echo "Deploying organizers-app to loveable.dev" 

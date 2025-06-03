@@ -1,0 +1,60 @@
+name: 🐛 Bug Report
+description: Report a bug in Rhythm Sync
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app has the bug?
+      description: Select where you encountered the bug
+      options:
+        - Main App (rhythmsync.app)
+        - Organizers App (companion app)
+        - Both apps
+        - Backend/Database
+        - Shared component/package
+    validations:
+      required: true
+  
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of what the bug is
+      placeholder: What happened?
+    validations:
+      required: true
+  
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+  
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: What should have happened?
+    validations:
+      required: true
+  
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Your environment details
+      placeholder: |
+        - Browser: [e.g. Chrome, Safari]
+        - Device: [e.g. iPhone, Desktop]
+        - OS: [e.g. iOS, Windows, macOS]
+        - App Version: [if applicable] 
