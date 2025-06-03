@@ -89,7 +89,11 @@ const AvailabilityCalendar = ({ bandId, onAvailabilityChange }: AvailabilityCale
           return {
             userId: member.user_id,
             name: userData.name || userData.email || "Unknown",
-            dates: availabilityData?.map(avail => new Date(avail.date)) || [],
+            dates: availabilityData?.map(avail => {
+              // Parse date components to avoid timezone interpretation
+              const [year, month, day] = avail.date.split('-').map(Number);
+              return new Date(year, month - 1, day); // month is 0-indexed in JavaScript
+            }) || [],
             color: MEMBER_COLORS[index % MEMBER_COLORS.length],
           };
         });
