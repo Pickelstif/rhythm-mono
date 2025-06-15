@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { DndContext, DragEndEvent, DragOverlay } from '@dnd-kit/core';
+import { 
+  DndContext, 
+  DragEndEvent, 
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  MouseSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
 import { WeekSchedule } from '../types';
 import { DroppableDayColumn } from './DroppableDayColumn';
 import { ResizableEvent } from './ResizableEvent';
@@ -57,6 +67,27 @@ export function WeekView({
   const [showCustomBandModal, setShowCustomBandModal] = useState(false);
   const [bandsRefreshTrigger, setBandsRefreshTrigger] = useState(0);
 
+  // Configure sensors for both mouse and touch devices
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required to start drag (prevents accidental drags)
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // 200ms hold delay for touch devices
+        tolerance: 8, // 8px movement tolerance during delay
+      },
+    }),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required to start drag
+      },
+    }),
+    useSensor(KeyboardSensor) // For accessibility
+  );
+
   const formatWeekRange = () => {
     // Parse date strings to create dates in local timezone
     const [startYear, startMonth, startDay] = weekSchedule.startDate.split('-').map(Number);
@@ -85,7 +116,7 @@ export function WeekView({
   };
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex h-full gap-6">
         {/* Left Sidebar - Available Bands */}
         <div className="w-80 flex-shrink-0 h-full">

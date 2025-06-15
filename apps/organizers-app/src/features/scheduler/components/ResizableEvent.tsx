@@ -177,6 +177,7 @@ export function ResizableEvent({
           group relative bg-gradient-to-br from-rhythm-500 to-rhythm-600 
           text-white rounded-lg shadow-lg border border-rhythm-400 
           transition-all duration-200 hover:shadow-xl cursor-grab active:cursor-grabbing
+          touch-none select-none
           ${isResizing ? 'cursor-ns-resize' : ''}
           ${isCrossDayDragging ? 'z-50 rotate-1' : ''}
           ${isDropOver ? 'ring-2 ring-rhythm-300 bg-rhythm-400' : ''}

@@ -94,4 +94,22 @@ export function sortDateStrings(dateStrings: string[]): string[] {
  */
 export function parseDateStrings(dateStrings: string[]): Date[] {
   return dateStrings.map(parseDateString);
+}
+
+/**
+ * Get the first day of the current month as YYYY-MM-DD string
+ */
+export function getCurrentMonthStart(): string {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  return formatDateToString(firstDay);
+}
+
+/**
+ * Get the last day of the current month as YYYY-MM-DD string
+ */
+export function getCurrentMonthEnd(): string {
+  const today = new Date();
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Day 0 of next month = last day of current month
+  return formatDateToString(lastDay);
 } 

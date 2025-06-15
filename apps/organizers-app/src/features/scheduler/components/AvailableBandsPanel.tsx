@@ -105,7 +105,7 @@ function DraggableAvailableBandCard({ bandAvail, onAddClick }: DraggableAvailabl
     <Card 
       ref={setNodeRef}
       style={style}
-      className={`p-2 cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md ${isDragging ? 'rotate-1 z-50' : ''}`}
+      className={`p-2 cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md touch-none select-none ${isDragging ? 'rotate-1 z-50' : ''}`}
       onMouseDown={handleMouseDown}
       onPointerDown={handlePointerDown}
       {...dragAttributes}
@@ -211,7 +211,7 @@ function DraggableAllBandCard({ band, selectedDate, onAddClick }: DraggableAllBa
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center justify-between p-2 rounded-lg border hover:bg-muted/50 transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md ${isDragging ? 'rotate-1 z-50' : ''}`}
+      className={`flex items-center justify-between p-2 rounded-lg border hover:bg-muted/50 transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md touch-none select-none ${isDragging ? 'rotate-1 z-50' : ''}`}
       onMouseDown={handleMouseDown}
       onPointerDown={handlePointerDown}
       {...dragAttributes}

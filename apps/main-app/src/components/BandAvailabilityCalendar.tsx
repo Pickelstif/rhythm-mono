@@ -16,7 +16,9 @@ import {
   getTodayString, 
   isSameDate, 
   isDateInPast,
-  getTodayAtStartOfDay
+  getTodayAtStartOfDay,
+  getCurrentMonthStart,
+  getCurrentMonthEnd
 } from "@/utils/dateUtils";
 
 interface BandAvailability {
@@ -79,14 +81,15 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
       if (membersError) throw membersError;
       if (!members || members.length === 0) return;
 
-      // Get availability for each member
+      // Get availability for each member (current month)
       const memberAvailabilityPromises = members.map(async (member) => {
         const { data: availability, error: availabilityError } = await supabase
           .from("availability")
           .select("date")
           .eq("user_id", member.user_id)
           .eq("band_id", bandId)
-          .gte("date", getTodayString());
+          .gte("date", getCurrentMonthStart())
+          .lte("date", getCurrentMonthEnd());
 
         if (availabilityError) throw availabilityError;
         
@@ -242,7 +245,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
         <span className={cn(
           "text-sm font-medium leading-none",
           isPast ? "text-muted-foreground" : "text-foreground",
-          allMembersAvailable && !isPast && "text-amber-600"
+          allMembersAvailable && "text-amber-600"
         )}>
           {day.getDate()}
         </span>
@@ -323,30 +326,35 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Legend */}
+          {/* How to use */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <h4 className="text-sm font-medium">Legend:</h4>
-            <div className="flex items-center gap-6 text-sm flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 border border-border rounded-full flex items-center justify-center text-xs relative ring-2 ring-amber-400">
-                  15
-                </div>
-                <span className="text-muted-foreground">All members available</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 border border-border rounded-full flex items-center justify-center text-xs relative">
-                  20
-                  <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2">
-                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+            <h4 className="text-sm font-medium">How to use:</h4>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Use this calendar to mark when your band is available for gigs and events. When you set your band as available, event organizers using our companion app will be able to see these dates and reach out to book your band.
+              </p>
+              <div className="flex items-center gap-6 text-sm flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 border border-border rounded-full flex items-center justify-center text-xs relative ring-2 ring-amber-400">
+                    15
                   </div>
+                  <span className="text-muted-foreground">All members available</span>
                 </div>
-                <span className="text-muted-foreground">Band available</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 border border-border rounded-full flex items-center justify-center text-xs">
-                  25
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 border border-border rounded-full flex items-center justify-center text-xs relative">
+                    20
+                    <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2">
+                      <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    </div>
+                  </div>
+                  <span className="text-muted-foreground">Band available for gigs</span>
                 </div>
-                <span className="text-muted-foreground">Not available</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 border border-border rounded-full flex items-center justify-center text-xs">
+                    25
+                  </div>
+                  <span className="text-muted-foreground">Not available</span>
+                </div>
               </div>
             </div>
           </div>
@@ -359,31 +367,15 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
               onSelect={undefined}
               disabled={(date) => isDateInPast(date)}
               components={{
-                Day: ({ date, ...props }) => renderDay(date),
+                Day: ({ date, displayMonth, ...props }) => {
+                  return (
+                    <div {...props}>
+                      {renderDay(date)}
+                    </div>
+                  );
+                },
               }}
-              className="rounded-md border"
-              classNames={{
-                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                month: "space-y-4",
-                caption: "flex justify-center pt-1 relative items-center",
-                caption_label: "text-sm font-medium",
-                nav: "space-x-1 flex items-center",
-                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-                nav_button_previous: "absolute left-1",
-                nav_button_next: "absolute right-1",
-                table: "w-full border-collapse space-y-1",
-                head_row: "flex",
-                head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
-                row: "flex w-full mt-2",
-                cell: "text-center text-sm relative p-0 focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent",
-                day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100",
-                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                day_today: "bg-accent text-accent-foreground",
-                day_outside: "text-muted-foreground opacity-50",
-                day_disabled: "text-muted-foreground opacity-50",
-                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                day_hidden: "invisible",
-              }}
+              className="rounded-lg border-none scale-110"
             />
           </div>
 

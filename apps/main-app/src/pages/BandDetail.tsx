@@ -35,7 +35,9 @@ import {
   formatDateToString, 
   getTodayString, 
   sortDateStrings,
-  parseDateStrings
+  parseDateStrings,
+  getCurrentMonthStart,
+  getCurrentMonthEnd
 } from "@/utils/dateUtils";
 
 // Type definitions for Supabase query results
@@ -157,7 +159,7 @@ const BandDetail = () => {
       if (membersError) throw membersError;
       if (!members || members.length === 0) return;
 
-      // Get availability for each member
+      // Get availability for each member (current month)
       const memberAvailability = await Promise.all(
         members.map(async (member) => {
           const { data: availability, error: availabilityError } = await supabase
@@ -165,7 +167,8 @@ const BandDetail = () => {
             .select("date")
             .eq("user_id", member.user_id)
             .eq("band_id", bandId)
-            .gte("date", getTodayString());
+            .gte("date", getCurrentMonthStart())
+            .lte("date", getCurrentMonthEnd());
 
           if (availabilityError) throw availabilityError;
           
