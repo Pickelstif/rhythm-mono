@@ -215,7 +215,7 @@ export function useWeekScheduler(initialDate?: Date) {
       const startDate = formatDate(weekStart);
       const endDate = weekDates[6];
       
-      // Load schedules from database
+      // Load schedules from database (only for current organizer)
       const { data: schedulesData, error: schedulesError } = await supabase
         .from('schedules')
         .select(`
@@ -223,7 +223,8 @@ export function useWeekScheduler(initialDate?: Date) {
           band:bands(id, name)
         `)
         .gte('date', startDate)
-        .lte('date', endDate);
+        .lte('date', endDate)
+        .eq('organizer_id', user?.id);
 
       if (schedulesError) {
         throw schedulesError;

@@ -8,6 +8,7 @@ import { Search, Music, Plus, Clock, GripVertical } from 'lucide-react';
 import { supabase } from '@rhythm-sync/database';
 import type { Tables } from '@rhythm-sync/database';
 import { useDraggable } from '@dnd-kit/core';
+import { useAuth } from '../../../context/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -285,6 +286,7 @@ export function AvailableBandsPanel({
   isLoading,
   refreshTrigger,
 }: AvailableBandsPanelProps) {
+  const { user } = useAuth();
   const [selectedBand, setSelectedBand] = useState<AvailableBandItem | null>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<string>('19:00');
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Duration in minutes
@@ -433,7 +435,7 @@ export function AvailableBandsPanel({
 
   // Load scheduled events for selected date to calculate suggested start time
   useEffect(() => {
-    if (!selectedDate) {
+    if (!selectedDate || !user?.id) {
       setScheduledEvents([]);
       return;
     }
@@ -450,6 +452,7 @@ export function AvailableBandsPanel({
             )
           `)
           .eq('date', selectedDate)
+          .eq('organizer_id', user?.id)
           .order('start_time');
 
         if (error) {
@@ -478,7 +481,7 @@ export function AvailableBandsPanel({
     };
 
     loadScheduledEvents();
-  }, [selectedDate]);
+  }, [selectedDate, user?.id]);
 
   const handleAddToScheduleClick = (band: AvailableBandItem) => {
     if (!selectedDate) return;
