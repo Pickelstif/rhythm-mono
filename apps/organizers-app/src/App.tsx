@@ -10,7 +10,6 @@ import Auth from "./pages/Auth";
 import { SchedulerPage } from "./features/scheduler/SchedulerPage";
 import { MobileOnly } from "./components/MobileOnly";
 import { useIsMobile } from "./hooks/useIsMobile";
-import { MobileDashboard } from "./pages/MobileDashboard";
 import { DailyViewer } from "./features/mobile/DailyViewer";
 
 const queryClient = new QueryClient();
@@ -31,10 +30,10 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/reset-password" element={<Auth />} />
                 
-                {/* Conditional routing based on device type */}
+                {/* Unified dashboard for both mobile and desktop */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    {isMobile ? <MobileDashboard /> : <Dashboard />}
+                    <Dashboard />
                   </ProtectedRoute>
                 } />
                 

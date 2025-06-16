@@ -1,5 +1,6 @@
 import React from 'react';
-import { Monitor, Smartphone } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Monitor, Smartphone, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import logoLight from '../assets/logo_light.png';
@@ -47,13 +48,23 @@ export function MobileOnly() {
               For the full experience, please access this application on a desktop or laptop computer.
             </p>
             
-            <Button 
-              onClick={() => window.location.reload()} 
-              variant="outline" 
-              className="w-full"
-            >
-              Refresh Page
-            </Button>
+            {/* Mobile Alternative */}
+            <div className="space-y-3">
+              <Link to="/daily">
+                <Button className="w-full">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  View Daily Schedule
+                </Button>
+              </Link>
+              
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                className="w-full"
+              >
+                Refresh Page
+              </Button>
+            </div>
           </div>
 
           {/* Footer Info */}
