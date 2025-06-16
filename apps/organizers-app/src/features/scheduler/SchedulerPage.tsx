@@ -4,7 +4,7 @@ import { DragEndEvent } from '@dnd-kit/core';
 import { useAuth } from '../../context/AuthContext';
 import { useWeekScheduler } from './hooks/useWeekScheduler';
 import { WeekView } from './components/WeekView';
-import { AvailableBandItem } from './types';
+import { AvailableBandItem, CustomBandForm } from './types';
 import { Button } from '@/components/ui/button';
 import Header from '../../components/Header';
 import { 
@@ -166,7 +166,7 @@ export function SchedulerPage() {
     setTimeSelectionModal({ isOpen: false });
   };
 
-  const handleAddCustomBand = async (customBandForm: any) => {
+  const handleAddCustomBand = async (customBandForm: CustomBandForm) => {
     try {
       await addCustomBand(customBandForm);
     } catch (error) {

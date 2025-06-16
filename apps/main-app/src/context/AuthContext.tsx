@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Function to check if user is a leader and clean up past events
-  const handleUserSession = async (session: Session | null) => {
+  const handleUserSession = useCallback(async (session: Session | null) => {
     if (session?.user) {
       await ensureUserInDatabase(session.user);
       const isLeader = await checkUserIsLeader(session.user.id);
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await cleanupPastEvents();
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     const setData = async (session: Session | null) => {
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [handleUserSession]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -225,6 +225,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Extract hook to fix fast refresh warning
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

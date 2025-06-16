@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,15 +53,7 @@ const IncomeExpenseTracker = () => {
   const [isLeader, setIsLeader] = useState(false);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
-  useEffect(() => {
-    if (bandId && user) {
-      fetchBandDetails();
-      fetchTransactions();
-      checkBandRole();
-    }
-  }, [bandId, user]);
-
-  const fetchBandDetails = async () => {
+  const fetchBandDetails = useCallback(async () => {
     if (!bandId) return;
 
     try {
@@ -77,9 +69,9 @@ const IncomeExpenseTracker = () => {
       console.error("Error fetching band details:", error);
       toast.error("Failed to fetch band details");
     }
-  };
+  }, [bandId]);
 
-  const checkBandRole = async () => {
+  const checkBandRole = useCallback(async () => {
     if (!bandId || !user) return;
 
     try {
@@ -95,9 +87,9 @@ const IncomeExpenseTracker = () => {
     } catch (error) {
       console.error("Error checking band role:", error);
     }
-  };
+  }, [bandId, user]);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     if (!bandId) return;
 
     try {
@@ -127,7 +119,15 @@ const IncomeExpenseTracker = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [bandId]);
+
+  useEffect(() => {
+    if (bandId && user) {
+      fetchBandDetails();
+      fetchTransactions();
+      checkBandRole();
+    }
+  }, [bandId, user, fetchBandDetails, fetchTransactions, checkBandRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

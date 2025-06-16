@@ -36,6 +36,34 @@ interface AvailableBandsPanelProps {
 type BandRow = Tables<'bands'>;
 type BandAvailabilityRow = Tables<'band_availability'>;
 
+// Interface for band availability with joined bands data
+interface BandAvailabilityWithBand {
+  id: string;
+  band_id: string;
+  available_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  notes: string | null;
+  bands?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+// Interface for schedules with joined bands data  
+interface ScheduleWithBand {
+  id: string;
+  band_id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  organizer_id: string;
+  bands?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
 // Draggable Available Band Card Component
 interface DraggableAvailableBandCardProps {
   bandAvail: AvailableBandItem;
@@ -365,7 +393,7 @@ export function AvailableBandsPanel({
           return;
         }
 
-        const availableBandItems: AvailableBandItem[] = data?.map((availability: any) => ({
+        const availableBandItems: AvailableBandItem[] = data?.map((availability: BandAvailabilityWithBand) => ({
           id: availability.id,
           band_id: availability.band_id,
           band: availability.bands ? {
@@ -461,7 +489,7 @@ export function AvailableBandsPanel({
         }
 
         // Convert to AvailableBandItem format for consistency with findNextAvailableTime function
-        const events: AvailableBandItem[] = data?.map((schedule: any) => ({
+        const events: AvailableBandItem[] = data?.map((schedule: ScheduleWithBand) => ({
           id: schedule.id,
           band_id: schedule.band_id,
           band: schedule.bands ? {

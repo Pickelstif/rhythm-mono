@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Function to ensure user has organizer role in database
-  const ensureOrganizerInDatabase = async (user: any) => {
+  const ensureOrganizerInDatabase = async (user: User) => {
     try {
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')

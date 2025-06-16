@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Band, Event, BandMember, Song, Setlist } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ const BandDetail = () => {
 
   const navigate = useNavigate();
 
-  const fetchBand = async () => {
+  const fetchBand = useCallback(async () => {
     if (!bandId || !user) return;
     
     try {
@@ -144,9 +144,9 @@ const BandDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [bandId, user]);
 
-  const fetchMemberAvailability = async () => {
+  const fetchMemberAvailability = useCallback(async () => {
     if (!bandId) return;
 
     try {
@@ -208,9 +208,9 @@ const BandDetail = () => {
     } catch (error) {
       console.error("Error fetching availability:", error);
     }
-  };
+  }, [bandId]);
 
-  const fetchSongs = async () => {
+  const fetchSongs = useCallback(async () => {
     if (!bandId) return;
     
     try {
@@ -238,9 +238,9 @@ const BandDetail = () => {
       console.error("Error fetching songs:", error);
       toast.error("Failed to load songs");
     }
-  };
+  }, [bandId]);
 
-  const fetchEventsWithSetlists = async () => {
+  const fetchEventsWithSetlists = useCallback(async () => {
     if (!bandId || !band) return;
     
     try {
@@ -274,24 +274,24 @@ const BandDetail = () => {
     } catch (error) {
       console.error("Error fetching setlists:", error);
     }
-  };
+  }, [bandId, band]);
 
   useEffect(() => {
     fetchBand();
-  }, [bandId, user]);
+  }, [bandId, user, fetchBand]);
 
   useEffect(() => {
     if (band) {
       fetchMemberAvailability();
       fetchEventsWithSetlists();
     }
-  }, [band]);
+  }, [band, fetchMemberAvailability, fetchEventsWithSetlists]);
 
   useEffect(() => {
     if (band) {
       fetchSongs();
     }
-  }, [band]);
+  }, [band, fetchSongs]);
 
   const isLeader = band?.members.some(
     member => member.userId === user?.id && member.role === "leader"

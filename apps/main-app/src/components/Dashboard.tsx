@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Band } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ const Dashboard = () => {
   const [bands, setBands] = useState<Band[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchBands = async () => {
+  const fetchBands = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -103,11 +103,11 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchBands();
-  }, [user]);
+  }, [user, fetchBands]);
 
   const getUpcomingEvents = (band: Band) => {
     const now = new Date();

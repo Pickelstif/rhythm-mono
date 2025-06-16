@@ -169,7 +169,7 @@ export function SetlistModal({
     setNotesByPosition(newNotes);
   };
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: { destination?: { index: number } | null; source: { index: number } }) => {
     if (!result.destination) return;
     
     const { source, destination } = result;
@@ -275,7 +275,7 @@ export function SetlistModal({
       onClose();
     } catch (error) {
       // Check if error is a PostgreSQL RLS policy violation
-      if (error instanceof Object && (error as any).code === '42501') {
+      if (error instanceof Object && 'code' in error && (error as { code: string }).code === '42501') {
         toast.error("Only leaders can edit the setlist");
       } else {
         toast.error("Failed to save setlist");

@@ -1,4 +1,4 @@
-import { UserProfile } from '../types';
+import { UserProfile, NotificationPreferences } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 
 const parseNotificationPreferences = (prefString: string) => {
@@ -14,7 +14,7 @@ const parseNotificationPreferences = (prefString: string) => {
   }
 };
 
-const stringifyNotificationPreferences = (prefs: any) => {
+const stringifyNotificationPreferences = (prefs: NotificationPreferences) => {
   return JSON.stringify(prefs);
 };
 

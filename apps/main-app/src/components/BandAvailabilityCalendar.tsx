@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +20,6 @@ import {
   getCurrentMonthStart,
   getCurrentMonthEnd
 } from "@/utils/dateUtils";
-
 interface BandAvailability {
   id: string;
   available_date: string;
@@ -45,11 +44,12 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
   const [memberAvailability, setMemberAvailability] = useState<Map<string, Date[]>>(new Map());
 
   // Fetch band availability
-  const fetchBandAvailability = async () => {
+  const fetchBandAvailability = useCallback(async () => {
     if (!bandId) return;
 
     try {
       // Using type assertion for the band_availability table that doesn't exist in types yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("band_availability")
         .select("*")
@@ -65,10 +65,10 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
     } finally {
       setLoading(false);
     }
-  };
+  }, [bandId]);
 
   // Fetch member availability to show when all members are available
-  const fetchMemberAvailability = async () => {
+  const fetchMemberAvailability = useCallback(async () => {
     if (!bandId) return;
 
     try {
@@ -111,12 +111,12 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
     } catch (error) {
       console.error("Error fetching member availability:", error);
     }
-  };
+  }, [bandId]);
 
   useEffect(() => {
     fetchBandAvailability();
     fetchMemberAvailability();
-  }, [bandId]);
+  }, [bandId, fetchBandAvailability, fetchMemberAvailability]);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date || !isLeader) return;
@@ -148,6 +148,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
       
       if (editingAvailability) {
         // Update existing availability
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any)
           .from("band_availability")
           .update({
@@ -162,6 +163,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
         toast.success("Band availability updated successfully");
       } else {
         // Create new availability
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any)
           .from("band_availability")
           .insert({
@@ -190,6 +192,7 @@ export const BandAvailabilityCalendar = ({ bandId, isLeader }: BandAvailabilityC
     if (!isLeader) return;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any)
         .from("band_availability")
         .delete()

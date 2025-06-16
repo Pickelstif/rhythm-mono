@@ -53,14 +53,10 @@ export interface ScheduledEvent {
 }
 
 // Represents an item in the schedule view
-export interface ScheduleItem extends ScheduledEvent {
-  // Any additional properties specific to the UI representation
-}
+export type ScheduleItem = ScheduledEvent
 
 // Represents an item in the available bands list
-export interface AvailableBandItem extends BandAvailability {
-  // Any additional properties specific to the UI representation
-}
+export type AvailableBandItem = BandAvailability
 
 export interface DaySchedule {
   date: string;

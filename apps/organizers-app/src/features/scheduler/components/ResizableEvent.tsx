@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDraggable, useDroppable, DraggableAttributes } from '@dnd-kit/core';
+import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { ScheduleItem } from '../types';
 import { Button } from '@/components/ui/button';
 import { X, Clock, Music, Info } from 'lucide-react';
@@ -14,8 +15,8 @@ interface ResizableEventProps {
   // Flag to indicate if this is used in a sortable context (to avoid drag conflicts)
   isSortable?: boolean;
   // Sortable drag props (when used in sortable context)
-  dragAttributes?: any;
-  dragListeners?: any;
+  dragAttributes?: DraggableAttributes;
+  dragListeners?: SyntheticListenerMap;
   // Allow cross-day dragging even in sortable context
   allowCrossDayDrag?: boolean;
 }

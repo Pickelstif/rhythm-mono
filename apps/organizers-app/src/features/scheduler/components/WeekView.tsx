@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { 
   DndContext, 
   DragEndEvent, 
+  DragStartEvent,
   DragOverlay,
   PointerSensor,
   TouchSensor,
@@ -10,7 +11,7 @@ import {
   useSensor,
   useSensors
 } from '@dnd-kit/core';
-import { WeekSchedule } from '../types';
+import { WeekSchedule, TimeSelectionModal as TimeSelectionModalType, CustomBandForm, DragItem } from '../types';
 import { DroppableDayColumn } from './DroppableDayColumn';
 import { ResizableEvent } from './ResizableEvent';
 import { TimeSelectionModal } from './TimeSelectionModal';
@@ -32,10 +33,10 @@ interface WeekViewProps {
   onReorderEvents: (date: string, eventIds: string[]) => void;
   onEventUpdate?: (eventId: string, updates: Partial<ScheduleItem>) => void;
   currentWeekStart: Date;
-  timeSelectionModal: any;
+  timeSelectionModal: TimeSelectionModalType;
   onTimeSelectionConfirm: (startTime: string, durationMinutes: number) => void;
   onTimeSelectionClose: () => void;
-  onAddCustomBand: (customBand: any) => void;
+  onAddCustomBand: (customBand: CustomBandForm) => void;
   onAddBandToSchedule: (band: AvailableBandItem, startTime: string, endTime: string) => void;
   hasUnsavedChanges: boolean;
   isSaving: boolean;
@@ -63,7 +64,7 @@ export function WeekView({
   isSaving,
   onSave,
 }: WeekViewProps) {
-  const [activeDragItem, setActiveDragItem] = useState<any>(null);
+  const [activeDragItem, setActiveDragItem] = useState<{ type: 'band' | 'event'; band?: AvailableBandItem; event?: ScheduleItem } | null>(null);
   const [showCustomBandModal, setShowCustomBandModal] = useState(false);
   const [bandsRefreshTrigger, setBandsRefreshTrigger] = useState(0);
 
@@ -100,8 +101,8 @@ export function WeekView({
     return `${months[startDate.getMonth()]} ${startDate.getDate()} - ${months[endDate.getMonth()]} ${endDate.getDate()}, ${endDate.getFullYear()}`;
   };
 
-  const handleDragStart = (event: any) => {
-    setActiveDragItem(event.active.data.current);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragItem(event.active.data.current as { type: 'band' | 'event'; band?: AvailableBandItem; event?: ScheduleItem });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -109,7 +110,7 @@ export function WeekView({
     onDragEnd(event);
   };
 
-  const handleCustomBandAdd = async (customBand: any) => {
+  const handleCustomBandAdd = async (customBand: CustomBandForm) => {
     await onAddCustomBand(customBand);
     // Trigger refresh of bands list after creating a new band
     setBandsRefreshTrigger(prev => prev + 1);
