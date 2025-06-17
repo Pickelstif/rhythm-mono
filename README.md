@@ -1,104 +1,228 @@
-# Welcome to your Lovable project
+# Rhythm Sync - Comprehensive Band & Event Management Platform
 
-## Project info
+A modern, full-stack monorepo application designed to streamline band management and event organization. Built with TypeScript, React, and Supabase, Rhythm Sync provides two specialized applications serving different aspects of the music industry ecosystem.
 
-**URL**: https://lovable.dev/projects/cac5525e-96f2-403b-b62e-314bc2c3f0b1
+## 🎵 Project Overview
 
-## How can I edit this code?
+**Rhythm Sync** is a comprehensive platform that bridges the gap between bands and event organizers, providing tools for efficient management, scheduling, and coordination of musical events.
 
-There are several ways of editing your application.
+### Architecture
 
-**Use Lovable**
+This monorepo contains:
+- **Main App** (`@rhythm-sync/main-app`) - Band management platform for musicians
+- **Organizers App** (`@rhythm-sync/organizers-app`) - Event scheduling platform for organizers
+- **Shared Packages** - Common database types and utilities
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/cac5525e-96f2-403b-b62e-314bc2c3f0b1) and start prompting.
+## 🚀 Applications
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🎸 Main App - Band Management Platform
 
-**Use your preferred IDE**
+A comprehensive solution for bands to manage their musical activities:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+#### Core Features
+- **Band Management**: Create and manage bands, invite members, assign roles
+- **Member Availability Tracking**: Individual and band-wide availability calendars
+- **Event Management**: Track rehearsals, gigs, and performances
+- **Song Library**: Organize songs with metadata, sheets, and notes
+- **Setlist Creation**: Build and manage setlists for events with drag-and-drop functionality
+- **PDF Generation**: Create professional setlist PDFs with embedded sheet music
+- **Income & Expense Tracking**: Financial management for bands
+- **Spotify Integration**: Import playlists and song data
+- **Profile Management**: Customize band and member profiles
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+#### Advanced Features
+- **Band Availability System**: Leaders can set official band availability for bookings
+- **Multi-format PDF Export**: Setlists with embedded sheet music and note sections
+- **Real-time Collaboration**: Live updates for band members
+- **Mobile Responsive**: Optimized for all devices
 
-Follow these steps:
+### 📅 Organizers App - Event Management Platform
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+A specialized tool for event organizers and venue managers:
+
+#### Core Features
+- **Schedule Management**: Weekly view with drag-and-drop event scheduling
+- **Band Booking**: Browse and book available bands
+- **Event Coordination**: Manage multiple events and time slots
+- **Availability Tracking**: See real-time band availability
+- **Custom Band Management**: Add bands not in the main system
+- **Mobile-Optimized**: Dedicated mobile views for on-the-go management
+
+#### Scheduling Features
+- **Drag & Drop Interface**: Intuitive event placement
+- **Time Slot Management**: Flexible scheduling with conflict detection
+- **Multi-day Planning**: Weekly view with easy navigation
+- **Real-time Updates**: Live synchronization across users
+
+## 🛠 Technology Stack
+
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **shadcn/ui** for component library
+- **React Router** for navigation
+- **React Query** for data fetching and caching
+- **React Hook Form** with Zod validation
+
+### Backend & Database
+- **Supabase** for backend services
+- **PostgreSQL** for data storage
+- **Real-time subscriptions** for live updates
+- **Row Level Security** for data protection
+
+### Development Tools
+- **Turborepo** for monorepo management
+- **TypeScript** for type safety
+- **ESLint** for code linting
+- **PostCSS** for CSS processing
+
+### Specialized Libraries
+- **PDF-lib** & **PDF.js** for PDF generation
+- **React Beautiful DND** for drag-and-drop
+- **Date-fns** for date manipulation
+- **Lucide React** for icons
+
+## 🏃‍♂️ Getting Started
+
+### Prerequisites
+- **Node.js** (v18 or higher) - [Install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **npm** (comes with Node.js)
+- **Git** for version control
+
+### Installation
+
+1. **Clone the repository**
+```bash
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+cd rhythm-mono
 ```
 
-**Edit a file directly in GitHub**
+2. **Install dependencies**
+```bash
+npm install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. **Set up environment variables**
+Create `.env` files in both app directories based on the provided examples.
 
-**Use GitHub Codespaces**
+4. **Start development servers**
+```bash
+# Start both applications
+npm run dev
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Or start individual apps
+npm run dev:main-app     # Main app on port 8080
+npm run dev:organizers   # Organizers app on port 8081
+```
 
-## What technologies are used for this project?
+### Build Commands
+```bash
+# Build all applications
+npm run build
 
-This project is built with:
+# Build specific apps
+npm run build:main-app
+npm run build:organizers-app
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Type checking
+npm run type-check
 
-## PDF Setlist Generator
+# Linting
+npm run lint
+```
 
-The application includes a PDF generator for creating detailed setlist documents that can be easily shared and printed. This feature:
+## 📁 Project Structure
 
-- Creates professional setlist PDFs for gigs and rehearsals
-- Includes a setlist overview page with all songs and notes
-- Generates individual pages for each song with details
-- Automatically embeds song sheets from Supabase Storage when available
-- Provides fallback options when embedded content cannot be loaded
-- Supports downloading the finished PDF for offline use
+```
+rhythm-mono/
+├── apps/
+│   ├── main-app/           # Band management application
+│   │   ├── src/
+│   │   │   ├── components/ # React components
+│   │   │   ├── pages/      # Route components
+│   │   │   ├── context/    # React contexts
+│   │   │   ├── hooks/      # Custom hooks
+│   │   │   └── lib/        # Utilities and services
+│   │   └── ...
+│   └── organizers-app/     # Event organizers application
+│       ├── src/
+│       │   ├── features/   # Feature-based organization
+│       │   ├── components/ # Shared components
+│       │   └── pages/      # Route components
+│       └── ...
+├── packages/
+│   ├── database/           # Shared database utilities
+│   └── shared-types/       # Common TypeScript types
+└── ...
+```
 
-The PDFs are designed to be readable on an iPad for use during performances and include:
+## 🎯 Key Features Breakdown
 
-1. A cover page with:
-   - Event title and type (rehearsal/gig)
-   - Date and time
-   - Location (if available)
-   - Complete setlist summary
+### Band Management
+- Multi-role band system (Leaders, Members)
+- Invitation system with secure join codes
+- Member availability tracking
+- Band-wide availability management
 
-2. Individual pages for each song featuring:
-   - Song title and artist
-   - Performance notes (if added)
-   - Embedded song sheet (if available) 
-   - Blank lined section for notes when no song sheet is available
+### Event & Setlist Management
+- Event creation and tracking
+- Professional PDF setlist generation
+- Sheet music embedding
+- Drag-and-drop setlist organization
+- Performance notes and annotations
 
-The PDF generation is handled by:
-- PDF-lib for creating the PDF document structure
-- PDF.js for embedding existing song sheets into the new document
+### Financial Tracking
+- Income and expense tracking
+- Band financial overview
+- Transaction categorization
 
-This feature is part of the broader setlist management system that allows band leaders to create, edit, and rearrange setlists for upcoming events.
+### Integration Capabilities
+- Spotify playlist import
+- External calendar synchronization
+- PDF export for offline use
 
-## How can I deploy this project?
+## 🚀 Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/cac5525e-96f2-403b-b62e-314bc2c3f0b1) and click on Share -> Publish.
+### Vercel Deployment (Recommended)
+Both applications are optimized for Vercel deployment:
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+# Deploy main app
+npm run build:main-app
 
-Yes it is!
+# Deploy organizers app  
+npm run build:organizers-app
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+See `VERCEL_DEPLOYMENT_GUIDE.md` for detailed deployment instructions.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Custom Domain
+Connect custom domains through your hosting provider's domain management interface.
+
+## 📚 Documentation
+
+- `BAND_AVAILABILITY_FEATURE.md` - Detailed band availability system documentation
+- `README-SETLIST.md` - Comprehensive setlist management guide
+- `USER_TYPE_MIGRATION_GUIDE.md` - Database migration information
+- `VERCEL_DEPLOYMENT_GUIDE.md` - Deployment instructions
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is private and proprietary. All rights reserved.
+
+## 🆘 Support
+
+For support, feature requests, or bug reports, please open an issue in the repository.
+
+---
+
+**Built with ❤️ for the music community**
